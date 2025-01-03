@@ -72,11 +72,18 @@
             </div>
             <div class="card-body">
                 {% if ferias_atuais %}
+                    {% if ferias_com_conflito %}
+                        <div class="alert alert-danger">
+                            <strong>Atenção!</strong> Existem funcionários do mesmo cargo em férias simultaneamente.
+                            Isso pode afetar a cobertura das atividades.
+                        </div>
+                    {% endif %}
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
                                 <tr>
                                     <th>Funcionário</th>
+                                    <th>Cargo</th>
                                     <th>Início</th>
                                     <th>Fim</th>
                                     <th>Dias</th>
@@ -84,8 +91,9 @@
                             </thead>
                             <tbody>
                                 {% for ferias in ferias_atuais %}
-                                    <tr>
+                                    <tr {% if ferias.id in ferias_com_conflito %}class="table-danger"{% endif %}>
                                         <td>{{ ferias.funcionario.nome }}</td>
+                                        <td>{{ ferias.funcionario.cargo }}</td>
                                         <td>{{ ferias.data_inicio|date:"d/m/Y" }}</td>
                                         <td>{{ ferias.data_fim|date:"d/m/Y" }}</td>
                                         <td>{{ ferias.dias_utilizados }}</td>
