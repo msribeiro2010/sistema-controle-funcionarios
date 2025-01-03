@@ -1,175 +1,185 @@
 {% extends 'funcionarios/base.html' %}
-{% load ferias_extras %}
 
 {% block title %}Painel Administrativo - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <h5 class="card-title">Total de Funcionários</h5>
-                <h2 class="display-4">{{ total_funcionarios }}</h2>
+<div class="container mt-4">
+    <h2>Painel Administrativo</h2>
+    
+    <div class="row mt-4">
+        <!-- Cards de Estatísticas -->
+        <div class="col-md-4">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Total de Funcionários</h5>
+                    <h2 class="display-4">{{ total_funcionarios }}</h2>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <h5 class="card-title">Em Férias Atualmente</h5>
-                <h2 class="display-4">{{ funcionarios_em_ferias }}</h2>
+        <div class="col-md-4">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Em Férias Atualmente</h5>
+                    <h2 class="display-4">{{ funcionarios_em_ferias }}</h2>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <h5 class="card-title">Plantões este Mês</h5>
-                <h2 class="display-4">{{ total_plantoes_mes }}</h2>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Lista de Funcionários</h5>
-                <a href="{% url 'admin:auth_user_add' %}" class="btn btn-primary btn-sm">Novo Funcionário</a>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Matrícula</th>
-                                <th>Cargo</th>
-                                <th>Dias de Férias</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for funcionario in funcionarios %}
-                                <tr>
-                                    <td>{{ funcionario.nome }}</td>
-                                    <td>{{ funcionario.matricula }}</td>
-                                    <td>{{ funcionario.cargo }}</td>
-                                    <td>{{ funcionario.dias_ferias_disponiveis }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <div class="col-md-4">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Plantões este Mês</h5>
+                    <h2 class="display-4">{{ total_plantoes_mes }}</h2>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Férias em Andamento</h5>
-                <a href="{% url 'registrar_ferias' %}" class="btn btn-primary btn-sm">Registrar Férias</a>
-            </div>
-            <div class="card-body">
-                {% if ferias_atuais %}
-                    {% if ferias_com_conflito %}
-                        <div class="alert alert-danger">
-                            <h5 class="alert-heading">
-                                <i class="fas fa-exclamation-triangle"></i> 
-                                Conflitos de Férias Detectados!
-                            </h5>
-                            <p>Os seguintes funcionários têm períodos de férias que se sobrepõem:</p>
-                            <ul>
-                                {% for ferias in ferias_atuais %}
-                                    {% if ferias.id in ferias_com_conflito %}
-                                        <li>
-                                            <strong>{{ ferias.funcionario.nome }}</strong> ({{ ferias.funcionario.cargo }})
-                                            conflita com: {{ conflitos_por_ferias|get_item:ferias.id|join:", " }}
-                                        </li>
-                                    {% endif %}
-                                {% endfor %}
-                            </ul>
-                            <hr>
-                            <p class="mb-0">
-                                Por favor, revise os períodos destacados em vermelho na tabela abaixo.
-                                Funcionários do mesmo cargo com férias simultâneas podem causar problemas de cobertura.
-                            </p>
-                        </div>
-                    {% endif %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Funcionário</th>
-                                    <th>Cargo</th>
-                                    <th>Início</th>
-                                    <th>Fim</th>
-                                    <th>Dias</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for ferias in ferias_atuais %}
-                                    <tr {% if ferias.id in ferias_com_conflito %}
-                                        class="table-danger"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="top"
-                                        title="Conflito com: {{ conflitos_por_ferias|get_item:ferias.id|join:', ' }}"
-                                       {% endif %}>
-                                        <td><strong>{{ ferias.funcionario.nome }}</strong></td>
-                                        <td>{{ ferias.funcionario.cargo }}</td>
-                                        <td>{{ ferias.data_inicio|date:"d/m/Y" }}</td>
-                                        <td>{{ ferias.data_fim|date:"d/m/Y" }}</td>
-                                        <td>{{ ferias.dias_utilizados }}</td>
-                                        <td>
-                                            {% if ferias.id in ferias_com_conflito %}
-                                                <span class="badge bg-danger">Conflito</span>
-                                            {% else %}
-                                                <span class="badge bg-success">OK</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <p>Nenhum funcionário está de férias atualmente.</p>
-                {% endif %}
+    <!-- Lista de Funcionários -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Lista de Funcionários</h5>
+            <a href="{% url 'admin:funcionarios_funcionario_add' %}" class="btn btn-primary">Novo Funcionário</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Matrícula</th>
+                            <th>Cargo</th>
+                            <th>Dias de Férias</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for funcionario in funcionarios %}
+                        <tr>
+                            <td>{{ funcionario.nome }}</td>
+                            <td>{{ funcionario.matricula }}</td>
+                            <td>{{ funcionario.cargo }}</td>
+                            <td>{{ funcionario.dias_ferias_disponiveis }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
 
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5 class="mb-0">Próximos Plantões</h5>
-            </div>
-            <div class="card-body">
-                {% if proximos_plantoes %}
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Funcionário</th>
-                                    <th>Data</th>
-                                    <th>Tipo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for plantao in proximos_plantoes %}
-                                    <tr>
-                                        <td>{{ plantao.funcionario.nome }}</td>
-                                        <td>{{ plantao.data|date:"d/m/Y" }}</td>
-                                        <td>{{ plantao.get_tipo_display }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+    <!-- Férias em Andamento -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Férias em Andamento</h5>
+            <a href="{% url 'registrar_ferias' %}" class="btn btn-primary">Registrar Férias</a>
+        </div>
+        <div class="card-body">
+            {% if ferias_atuais %}
+                {% if ferias_com_conflito %}
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Conflitos de Férias Detectados!
+                        </h5>
+                        <p>Os seguintes funcionários têm períodos de férias que se sobrepõem:</p>
+                        <ul>
+                            {% for ferias in ferias_atuais %}
+                                {% if ferias.id in ferias_com_conflito %}
+                                    <li>
+                                        <strong>{{ ferias.funcionario.nome }}</strong> 
+                                        ({{ ferias.funcionario.cargo }})
+                                        {% with conflitos=conflitos_por_ferias|default:{}|get:ferias.id %}
+                                            {% if conflitos %}
+                                                conflita com: {{ conflitos|join:", " }}
+                                            {% endif %}
+                                        {% endwith %}
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                        <hr>
+                        <p class="mb-0">
+                            Por favor, revise os períodos destacados em vermelho na tabela abaixo.
+                            Funcionários do mesmo cargo com férias simultâneas podem causar problemas de cobertura.
+                        </p>
                     </div>
-                {% else %}
-                    <p>Nenhum plantão agendado.</p>
                 {% endif %}
-            </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Funcionário</th>
+                                <th>Cargo</th>
+                                <th>Início</th>
+                                <th>Fim</th>
+                                <th>Dias</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ferias in ferias_atuais %}
+                                <tr {% if ferias.id in ferias_com_conflito %}
+                                    class="table-danger"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    {% with conflitos=conflitos_por_ferias|default:{}|get:ferias.id %}
+                                        {% if conflitos %}
+                                            title="Conflito com: {{ conflitos|join:', ' }}"
+                                        {% endif %}
+                                    {% endwith %}
+                                   {% endif %}>
+                                    <td><strong>{{ ferias.funcionario.nome }}</strong></td>
+                                    <td>{{ ferias.funcionario.cargo }}</td>
+                                    <td>{{ ferias.data_inicio|date:"d/m/Y" }}</td>
+                                    <td>{{ ferias.data_fim|date:"d/m/Y" }}</td>
+                                    <td>{{ ferias.dias_utilizados }}</td>
+                                    <td>
+                                        {% if ferias.id in ferias_com_conflito %}
+                                            <span class="badge bg-danger">Conflito</span>
+                                        {% else %}
+                                            <span class="badge bg-success">OK</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>Nenhum funcionário está de férias atualmente.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Próximos Plantões -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Próximos Plantões</h5>
+        </div>
+        <div class="card-body">
+            {% if proximos_plantoes %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Funcionário</th>
+                                <th>Data</th>
+                                <th>Tipo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plantao in proximos_plantoes %}
+                            <tr>
+                                <td>{{ plantao.funcionario.nome }}</td>
+                                <td>{{ plantao.data|date:"d/m/Y" }}</td>
+                                <td>{{ plantao.tipo }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>Não há plantões agendados.</p>
+            {% endif %}
         </div>
     </div>
 </div>
