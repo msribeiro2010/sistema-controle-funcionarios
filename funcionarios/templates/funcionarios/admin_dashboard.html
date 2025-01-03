@@ -1,4 +1,5 @@
 {% extends 'funcionarios/base.html' %}
+{% load ferias_extras %}
 
 {% block title %}Painel Administrativo - {{ block.super }}{% endblock %}
 
@@ -87,9 +88,9 @@
                                     <li>
                                         <strong>{{ ferias.funcionario.nome }}</strong> 
                                         ({{ ferias.funcionario.cargo }})
-                                        {% with conflitos=conflitos_por_ferias|default:{}|get:ferias.id %}
-                                            {% if conflitos %}
-                                                conflita com: {{ conflitos|join:", " }}
+                                        {% with conflitos=conflitos_por_ferias|default:{} %}
+                                            {% if conflitos|get:ferias.id %}
+                                                conflita com: {{ conflitos|get:ferias.id|join:", " }}
                                             {% endif %}
                                         {% endwith %}
                                     </li>
@@ -121,9 +122,9 @@
                                     class="table-danger"
                                     data-bs-toggle="tooltip"
                                     data-bs-placement="top"
-                                    {% with conflitos=conflitos_por_ferias|default:{}|get:ferias.id %}
-                                        {% if conflitos %}
-                                            title="Conflito com: {{ conflitos|join:', ' }}"
+                                    {% with conflitos=conflitos_por_ferias|default:{} %}
+                                        {% if conflitos|get:ferias.id %}
+                                            title="Conflito com: {{ conflitos|get:ferias.id|join:', ' }}"
                                         {% endif %}
                                     {% endwith %}
                                    {% endif %}>
