@@ -88,11 +88,9 @@
                                     <li>
                                         <strong>{{ ferias.funcionario.nome }}</strong> 
                                         ({{ ferias.funcionario.cargo }})
-                                        {% with conflitos=conflitos_por_ferias|default:{} %}
-                                            {% if conflitos|get:ferias.id %}
-                                                conflita com: {{ conflitos|get:ferias.id|join:", " }}
-                                            {% endif %}
-                                        {% endwith %}
+                                        {% if conflitos_por_ferias|get:ferias.id %}
+                                            conflita com: {{ conflitos_por_ferias|get:ferias.id|join:", " }}
+                                        {% endif %}
                                     </li>
                                 {% endif %}
                             {% endfor %}
@@ -122,11 +120,9 @@
                                     class="table-danger"
                                     data-bs-toggle="tooltip"
                                     data-bs-placement="top"
-                                    {% with conflitos=conflitos_por_ferias|default:{} %}
-                                        {% if conflitos|get:ferias.id %}
-                                            title="Conflito com: {{ conflitos|get:ferias.id|join:', ' }}"
-                                        {% endif %}
-                                    {% endwith %}
+                                    {% if conflitos_por_ferias|get:ferias.id %}
+                                        title="Conflito com: {{ conflitos_por_ferias|get:ferias.id|join:', ' }}"
+                                    {% endif %}
                                    {% endif %}>
                                     <td><strong>{{ ferias.funcionario.nome }}</strong></td>
                                     <td>{{ ferias.funcionario.cargo }}</td>

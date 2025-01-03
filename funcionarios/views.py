@@ -66,6 +66,7 @@ def admin_dashboard(request):
     conflitos_por_ferias = {}
     
     for ferias in ferias_atuais:
+        conflitos_por_ferias[ferias.id] = []  # Inicializa a lista vazia para cada férias
         # Verificar conflitos com outras férias do mesmo cargo
         outros_conflitos = verificar_conflito_ferias(
             ferias.data_inicio,
@@ -79,7 +80,8 @@ def admin_dashboard(request):
             for conflito in outros_conflitos:
                 ferias_com_conflito.add(conflito.id)
                 if conflito.id not in conflitos_por_ferias:
-                    conflitos_por_ferias[conflito.id] = [ferias.funcionario.nome]
+                    conflitos_por_ferias[conflito.id] = []
+                conflitos_por_ferias[conflito.id].append(ferias.funcionario.nome)
     
     proximos_plantoes = Plantao.objects.filter(
         data__gte=hoje
