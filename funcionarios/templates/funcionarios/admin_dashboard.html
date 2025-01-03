@@ -1,4 +1,5 @@
 {% extends 'funcionarios/base.html' %}
+{% load ferias_extras %}
 
 {% block title %}Painel Administrativo - {{ block.super }}{% endblock %}
 
@@ -74,10 +75,26 @@
                 {% if ferias_atuais %}
                     {% if ferias_com_conflito %}
                         <div class="alert alert-danger">
-                            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Atenção! Conflitos Detectados</h5>
-                            <p>Existem funcionários do mesmo cargo com férias em períodos simultâneos.
-                               Isso pode afetar a cobertura das atividades.</p>
-                            <p>Por favor, revise os períodos destacados em vermelho na tabela abaixo.</p>
+                            <h5 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                Conflitos de Férias Detectados!
+                            </h5>
+                            <p>Os seguintes funcionários têm períodos de férias que se sobrepõem:</p>
+                            <ul>
+                                {% for ferias in ferias_atuais %}
+                                    {% if ferias.id in ferias_com_conflito %}
+                                        <li>
+                                            <strong>{{ ferias.funcionario.nome }}</strong> ({{ ferias.funcionario.cargo }})
+                                            conflita com: {{ conflitos_por_ferias|get_item:ferias.id|join:", " }}
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                            <hr>
+                            <p class="mb-0">
+                                Por favor, revise os períodos destacados em vermelho na tabela abaixo.
+                                Funcionários do mesmo cargo com férias simultâneas podem causar problemas de cobertura.
+                            </p>
                         </div>
                     {% endif %}
                     <div class="table-responsive">
@@ -96,9 +113,9 @@
                                 {% for ferias in ferias_atuais %}
                                     <tr {% if ferias.id in ferias_com_conflito %}
                                         class="table-danger"
-                                        data-toggle="tooltip"
-                                        data-placement="top"
-                                        title="Conflito: Outro funcionário do mesmo cargo está de férias neste período"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Conflito com: {{ conflitos_por_ferias|get_item:ferias.id|join:', ' }}"
                                        {% endif %}>
                                         <td><strong>{{ ferias.funcionario.nome }}</strong></td>
                                         <td>{{ ferias.funcionario.cargo }}</td>

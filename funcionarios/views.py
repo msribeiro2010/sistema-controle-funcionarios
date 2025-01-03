@@ -10,10 +10,11 @@ def is_admin(user):
 
 def verificar_conflito_ferias(data_inicio, data_fim, cargo, funcionario_atual=None):
     """Verifica se há conflito de férias para funcionários do mesmo cargo."""
+    # Verifica se existe alguma sobreposição de datas
     query = Q(
-        Q(data_inicio__lte=data_fim, data_fim__gte=data_inicio) |  # Períodos se sobrepõem
-        Q(data_inicio__gte=data_inicio, data_inicio__lte=data_fim) |  # Início dentro do período
-        Q(data_fim__gte=data_inicio, data_fim__lte=data_fim)  # Fim dentro do período
+        Q(data_inicio__lte=data_fim, data_fim__gte=data_inicio) |  # Sobreposição completa
+        Q(data_inicio__lte=data_inicio, data_fim__gte=data_inicio) |  # Início dentro de outro período
+        Q(data_inicio__lte=data_fim, data_fim__gte=data_fim)  # Fim dentro de outro período
     )
     
     ferias_conflitantes = Ferias.objects.filter(
@@ -55,26 +56,30 @@ def admin_dashboard(request):
     funcionarios = Funcionario.objects.all()
     hoje = datetime.now().date()
     
-    # Buscar todas as férias atuais
+    # Buscar todas as férias atuais e futuras (próximos 30 dias)
     ferias_atuais = Ferias.objects.filter(
-        Q(data_inicio__lte=hoje, data_fim__gte=hoje) |  # Férias em andamento
-        Q(data_inicio__gte=hoje, data_inicio__lte=hoje + timedelta(days=30))  # Férias nos próximos 30 dias
-    ).select_related('funcionario')
+        Q(data_inicio__lte=hoje + timedelta(days=30), data_fim__gte=hoje)
+    ).select_related('funcionario').order_by('data_inicio')
     
     # Verificar conflitos para cada período de férias
     ferias_com_conflito = set()
+    conflitos_por_ferias = {}
+    
     for ferias in ferias_atuais:
-        conflitos = verificar_conflito_ferias(
+        # Verificar conflitos com outras férias do mesmo cargo
+        outros_conflitos = verificar_conflito_ferias(
             ferias.data_inicio,
             ferias.data_fim,
-            ferias.funcionario.cargo,
-            ferias.funcionario
-        )
+            ferias.funcionario.cargo
+        ).exclude(id=ferias.id)
         
-        if conflitos.exists():
+        if outros_conflitos.exists():
             ferias_com_conflito.add(ferias.id)
-            for conflito in conflitos:
+            conflitos_por_ferias[ferias.id] = [f.funcionario.nome for f in outros_conflitos]
+            for conflito in outros_conflitos:
                 ferias_com_conflito.add(conflito.id)
+                if conflito.id not in conflitos_por_ferias:
+                    conflitos_por_ferias[conflito.id] = [ferias.funcionario.nome]
     
     proximos_plantoes = Plantao.objects.filter(
         data__gte=hoje
@@ -92,6 +97,7 @@ def admin_dashboard(request):
         'funcionarios': funcionarios,
         'ferias_atuais': ferias_atuais,
         'ferias_com_conflito': ferias_com_conflito,
+        'conflitos_por_ferias': conflitos_por_ferias,
         'proximos_plantoes': proximos_plantoes,
         'total_funcionarios': total_funcionarios,
         'funcionarios_em_ferias': funcionarios_em_ferias,
@@ -112,26 +118,33 @@ def registrar_ferias(request):
         if dias > funcionario.dias_ferias_disponiveis:
             messages.error(request, 'O funcionário não possui dias suficientes de férias disponíveis.')
             return redirect('registrar_ferias')
-            
+        
         # Verificar se já existe férias no período para o mesmo funcionário
-        ferias_existentes = verificar_conflito_ferias(data_inicio, data_fim, funcionario.cargo)
-        ferias_proprio_funcionario = ferias_existentes.filter(funcionario=funcionario)
+        ferias_proprio_funcionario = Ferias.objects.filter(
+            funcionario=funcionario,
+            data_inicio__lte=data_fim,
+            data_fim__gte=data_inicio
+        )
         
         if ferias_proprio_funcionario.exists():
-            messages.error(request, 'Este funcionário já possui férias registradas que conflitam com este período.')
+            messages.error(request, 'Este funcionário já possui férias registradas neste período.')
             return redirect('registrar_ferias')
         
         # Verificar conflitos com outros funcionários do mesmo cargo
-        ferias_outros_funcionarios = ferias_existentes.exclude(funcionario=funcionario)
-        if ferias_outros_funcionarios.exists():
-            funcionarios_conflito = ", ".join([f"{f.funcionario.nome} ({f.data_inicio.strftime('%d/%m/%Y')} a {f.data_fim.strftime('%d/%m/%Y')})" 
-                                            for f in ferias_outros_funcionarios])
-            messages.warning(
+        ferias_conflitantes = verificar_conflito_ferias(data_inicio, data_fim, funcionario.cargo)
+        
+        if ferias_conflitantes.exists():
+            funcionarios_conflito = ", ".join([
+                f"{f.funcionario.nome} ({f.data_inicio.strftime('%d/%m/%Y')} a {f.data_fim.strftime('%d/%m/%Y')})"
+                for f in ferias_conflitantes
+            ])
+            messages.error(
                 request,
-                f'ATENÇÃO: Outros funcionários do cargo {funcionario.cargo} '
-                f'já têm férias registradas neste período:\n{funcionarios_conflito}.\n'
-                'Isso pode afetar a cobertura das atividades. Deseja continuar mesmo assim?'
+                f'ATENÇÃO: Conflito detectado! Os seguintes funcionários do cargo {funcionario.cargo} '
+                f'já têm férias registradas que se sobrepõem a este período:\n\n{funcionarios_conflito}\n\n'
+                'Por favor, escolha um período diferente para evitar problemas de cobertura.'
             )
+            return redirect('registrar_ferias')
             
         Ferias.objects.create(
             funcionario=funcionario,
