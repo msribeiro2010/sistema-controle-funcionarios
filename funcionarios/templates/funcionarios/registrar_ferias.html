@@ -1,0 +1,53 @@
+{% extends 'funcionarios/base.html' %}
+
+{% block title %}Registrar Férias - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Registrar Período de Férias</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="funcionario" class="form-label">Selecione o Funcionário</label>
+                        <select class="form-select" id="funcionario" name="funcionario" required>
+                            <option value="">Escolha um funcionário</option>
+                            {% for funcionario in funcionarios %}
+                                <option value="{{ funcionario.id }}">
+                                    {{ funcionario.nome }} ({{ funcionario.dias_ferias_disponiveis }} dias disponíveis)
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="data_inicio" class="form-label">Data de Início das Férias</label>
+                            <input type="date" class="form-control" id="data_inicio" name="data_inicio" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="data_fim" class="form-label">Data de Retorno ao Trabalho</label>
+                            <input type="date" class="form-control" id="data_fim" name="data_fim" required>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">Importante:</h6>
+                        <ul class="mb-0">
+                            <li>Verifique se o funcionário possui dias suficientes disponíveis</li>
+                            <li>A data de retorno deve ser o primeiro dia útil após as férias</li>
+                            <li>O período mínimo de férias é de 5 dias corridos</li>
+                        </ul>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Voltar</a>
+                        <button type="submit" class="btn btn-primary">Confirmar Registro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

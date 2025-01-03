@@ -1,0 +1,41 @@
+{% extends 'funcionarios/base.html' %}
+
+{% block title %}Calendário - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Calendário de Férias e Plantões - {{ inicio_mes|date:"F/Y"|title }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Funcionário</th>
+                        <th>Tipo</th>
+                        <th>Período</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ferias in ferias %}
+                        <tr class="table-info">
+                            <td>{{ ferias.funcionario.nome }}</td>
+                            <td>Férias</td>
+                            <td>{{ ferias.data_inicio|date:"d/m/Y" }} - {{ ferias.data_fim|date:"d/m/Y" }}</td>
+                        </tr>
+                    {% endfor %}
+                    
+                    {% for plantao in plantoes %}
+                        <tr class="table-warning">
+                            <td>{{ plantao.funcionario.nome }}</td>
+                            <td>Plantão - {{ plantao.get_tipo_display }}</td>
+                            <td>{{ plantao.data|date:"d/m/Y" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

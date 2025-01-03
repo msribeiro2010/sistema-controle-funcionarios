@@ -1,0 +1,136 @@
+{% extends 'funcionarios/base.html' %}
+
+{% block title %}Painel Administrativo - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Total de Funcionários</h5>
+                <h2 class="display-4">{{ total_funcionarios }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Em Férias Atualmente</h5>
+                <h2 class="display-4">{{ funcionarios_em_ferias }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h5 class="card-title">Plantões este Mês</h5>
+                <h2 class="display-4">{{ total_plantoes_mes }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Lista de Funcionários</h5>
+                <a href="{% url 'admin:auth_user_add' %}" class="btn btn-primary btn-sm">Novo Funcionário</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Matrícula</th>
+                                <th>Cargo</th>
+                                <th>Dias de Férias</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for funcionario in funcionarios %}
+                                <tr>
+                                    <td>{{ funcionario.nome }}</td>
+                                    <td>{{ funcionario.matricula }}</td>
+                                    <td>{{ funcionario.cargo }}</td>
+                                    <td>{{ funcionario.dias_ferias_disponiveis }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Férias em Andamento</h5>
+                <a href="{% url 'registrar_ferias' %}" class="btn btn-primary btn-sm">Registrar Férias</a>
+            </div>
+            <div class="card-body">
+                {% if ferias_atuais %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Funcionário</th>
+                                    <th>Início</th>
+                                    <th>Fim</th>
+                                    <th>Dias</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ferias in ferias_atuais %}
+                                    <tr>
+                                        <td>{{ ferias.funcionario.nome }}</td>
+                                        <td>{{ ferias.data_inicio|date:"d/m/Y" }}</td>
+                                        <td>{{ ferias.data_fim|date:"d/m/Y" }}</td>
+                                        <td>{{ ferias.dias_utilizados }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>Nenhum funcionário está de férias atualmente.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Próximos Plantões</h5>
+            </div>
+            <div class="card-body">
+                {% if proximos_plantoes %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Funcionário</th>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for plantao in proximos_plantoes %}
+                                    <tr>
+                                        <td>{{ plantao.funcionario.nome }}</td>
+                                        <td>{{ plantao.data|date:"d/m/Y" }}</td>
+                                        <td>{{ plantao.get_tipo_display }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>Nenhum plantão agendado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

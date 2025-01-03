@@ -1,0 +1,93 @@
+{% extends 'funcionarios/base.html' %}
+
+{% block title %}Meu Painel - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Meus Dados</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Nome:</strong> {{ funcionario.nome }}</p>
+                <p><strong>Matrícula:</strong> {{ funcionario.matricula }}</p>
+                <p><strong>Cargo:</strong> {{ funcionario.cargo }}</p>
+                <p><strong>Dias de Férias Disponíveis:</strong> {{ funcionario.dias_ferias_disponiveis }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Histórico de Férias</h5>
+            </div>
+            <div class="card-body">
+                {% if ferias %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Início</th>
+                                    <th>Retorno</th>
+                                    <th>Dias</th>
+                                    <th>Situação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for f in ferias %}
+                                    <tr>
+                                        <td>{{ f.data_inicio|date:"d/m/Y" }}</td>
+                                        <td>{{ f.data_fim|date:"d/m/Y" }}</td>
+                                        <td>{{ f.dias_utilizados }}</td>
+                                        <td>
+                                            <span class="badge {% if f.status == 'aprovado' %}bg-success{% else %}bg-warning{% endif %}">
+                                                {{ f.get_status_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>Você ainda não possui registros de férias.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Meus Próximos Plantões</h5>
+            </div>
+            <div class="card-body">
+                {% if proximos_plantoes %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Observações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for plantao in proximos_plantoes %}
+                                    <tr>
+                                        <td>{{ plantao.data|date:"d/m/Y" }}</td>
+                                        <td>{{ plantao.get_tipo_display }}</td>
+                                        <td>{{ plantao.observacoes|default:"-" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>Você não possui plantões agendados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
