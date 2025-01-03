@@ -133,7 +133,15 @@
                                         {% if ferias.id in ferias_com_conflito %}
                                             <span class="badge bg-danger">Conflito</span>
                                         {% else %}
-                                            <span class="badge bg-success">OK</span>
+                                            {% if ferias.status == 'AGENDADO' %}
+                                                <span class="badge bg-info">Agendado</span>
+                                            {% elif ferias.status == 'EM_ANDAMENTO' %}
+                                                <span class="badge bg-primary">Em Andamento</span>
+                                            {% elif ferias.status == 'USUFRUIDO' %}
+                                                <span class="badge bg-success">Usufruído</span>
+                                            {% elif ferias.status == 'CANCELADO' %}
+                                                <span class="badge bg-secondary">Cancelado</span>
+                                            {% endif %}
                                         {% endif %}
                                     </td>
                                 </tr>

@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
-
-# Create your models here.
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import date
 
 class Funcionario(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='Usuário')
@@ -20,25 +21,65 @@ class Funcionario(models.Model):
 
 class Ferias(models.Model):
     STATUS_CHOICES = [
-        ('pendente', 'Pendente'),
-        ('aprovado', 'Aprovado'),
-        ('negado', 'Negado'),
+        ('AGENDADO', 'Agendado'),
+        ('EM_ANDAMENTO', 'Em Andamento'),
+        ('USUFRUIDO', 'Usufruído'),
+        ('CANCELADO', 'Cancelado'),
     ]
 
     funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, related_name='ferias', verbose_name='Funcionário')
-    data_inicio = models.DateField('Data de Início')
-    data_fim = models.DateField('Data de Fim')
+    data_inicio = models.DateField('Data de Início', default=date.today)
+    data_fim = models.DateField('Data de Fim', default=date.today)
     dias_utilizados = models.IntegerField('Dias Utilizados')
-    status = models.CharField('Status', max_length=10, choices=STATUS_CHOICES, default='pendente')
-    observacoes = models.TextField('Observações', blank=True, null=True)
+    status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default='AGENDADO')
+    data_criacao = models.DateTimeField('Data de Criação', default=timezone.now)
+    data_atualizacao = models.DateTimeField('Data de Atualização', auto_now=True)
+
+    def save(self, *args, **kwargs):
+        # Se é uma nova instância (não tem ID ainda)
+        if not self.pk:
+            # Deduz os dias de férias do saldo do funcionário
+            self.funcionario.dias_ferias_disponiveis -= self.dias_utilizados
+            self.funcionario.save()
+        
+        # Atualiza o status baseado nas datas
+        hoje = date.today()
+        if hoje > self.data_fim:
+            self.status = 'USUFRUIDO'
+        elif hoje >= self.data_inicio and hoje <= self.data_fim:
+            self.status = 'EM_ANDAMENTO'
+        
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # Antes de excluir, devolve os dias ao saldo do funcionário
+        # Apenas se o status não for 'USUFRUIDO'
+        if self.status != 'USUFRUIDO':
+            self.funcionario.dias_ferias_disponiveis += self.dias_utilizados
+            self.funcionario.save()
+        super().delete(*args, **kwargs)
+
+    def clean(self):
+        if self.data_inicio and self.data_fim:
+            if self.data_inicio > self.data_fim:
+                raise ValidationError('A data de início não pode ser posterior à data de fim.')
+            
+            # Calcula os dias utilizados
+            dias = (self.data_fim - self.data_inicio).days + 1
+            if dias > self.funcionario.dias_ferias_disponiveis and not self.pk:
+                raise ValidationError(
+                    f'Dias solicitados ({dias}) excedem os dias disponíveis '
+                    f'({self.funcionario.dias_ferias_disponiveis}).'
+                )
+            self.dias_utilizados = dias
+
+    def __str__(self):
+        return f"Férias de {self.funcionario.nome} - {self.get_status_display()}"
 
     class Meta:
         verbose_name = 'Férias'
         verbose_name_plural = 'Férias'
         ordering = ['-data_inicio']
-
-    def __str__(self):
-        return f"Férias de {self.funcionario.nome} - {self.data_inicio} até {self.data_fim}"
 
 class Plantao(models.Model):
     TIPO_CHOICES = [
