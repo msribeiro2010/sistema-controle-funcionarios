@@ -25,12 +25,11 @@ wheels/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
+media
 
 # Virtual Environment
 .env
 .venv
-env/
 venv/
 ENV/
 
@@ -40,5 +39,9 @@ ENV/
 *.swp
 *.swo
 
-# Mac
+# Static files
+staticfiles/
+
+# OS
 .DS_Store
+Thumbs.db
