@@ -1,32 +1,31 @@
 # Sistema de Controle de Funcionários
 
-Sistema desenvolvido em Django para gerenciamento de funcionários, controle de férias e plantões.
+Sistema web para gerenciamento de funcionários, férias e plantões.
 
 ## Funcionalidades
 
 - Cadastro e gerenciamento de funcionários
-- Registro e controle de férias
-- Agendamento de plantões
-- Dashboard administrativo com estatísticas
-- Painel individual para cada funcionário
-- Sistema de autenticação integrado
+- Controle de férias com detecção de conflitos
+- Gerenciamento de plantões
+- Dashboard administrativo
+- Controle de saldo de férias
+- Status automático de férias (Agendado, Em Andamento, Usufruído)
 
-## Tecnologias Utilizadas
+## Requisitos
 
-- Python 3.8+
-- Django 4.2.7
-- Bootstrap 5
-- SQLite (banco de dados)
+- Python 3.8 ou superior
+- PostgreSQL
+- pip (gerenciador de pacotes Python)
 
-## Instalação
+## Instalação em Produção
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/seu-usuario/Projeto-Controle-Funcionarios.git
-cd Projeto-Controle-Funcionarios
+git clone https://github.com/seu-usuario/controle-funcionarios.git
+cd controle-funcionarios
 ```
 
-2. Crie e ative um ambiente virtual:
+2. Crie um ambiente virtual e ative-o:
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
@@ -39,43 +38,98 @@ source .venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
-4. Execute as migrações:
+4. Configure as variáveis de ambiente:
 ```bash
-python manage.py migrate
+cp .env.example .env
+```
+Edite o arquivo `.env` com suas configurações:
+- Gere uma nova SECRET_KEY
+- Configure as credenciais do banco de dados
+- Ajuste outras configurações conforme necessário
+
+5. Configure o banco de dados PostgreSQL:
+```bash
+createdb controle_funcionarios  # Crie o banco de dados
+python manage.py migrate  # Execute as migrações
 ```
 
-5. Crie um superusuário:
+6. Colete os arquivos estáticos:
+```bash
+python manage.py collectstatic
+```
+
+7. Crie um superusuário:
 ```bash
 python manage.py createsuperuser
 ```
 
-6. Inicie o servidor:
+8. Inicie o servidor Gunicorn:
 ```bash
-python manage.py runserver
+gunicorn controle_funcionarios.wsgi:application
 ```
 
-O sistema estará disponível em `http://127.0.0.1:8000/`
+## Configuração do Servidor Web (Nginx)
 
-## Uso
+Exemplo de configuração do Nginx:
 
-1. Acesse o painel administrativo em `/admin` e crie os primeiros registros de funcionários
-2. Os administradores podem:
-   - Registrar férias para funcionários
-   - Agendar plantões
-   - Visualizar estatísticas gerais
-3. Os funcionários podem:
-   - Visualizar suas informações
-   - Consultar histórico de férias
-   - Ver próximos plantões agendados
+```nginx
+server {
+    listen 80;
+    server_name seu-dominio.com;
 
-## Contribuição
+    location = /favicon.ico { access_log off; log_not_found off; }
+    
+    location /static/ {
+        root /caminho/para/seu/projeto;
+    }
 
-1. Faça um Fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}
+```
 
-## Licença
+## Configuração do Supervisor
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Exemplo de configuração do Supervisor para manter o Gunicorn rodando:
+
+```ini
+[program:controle-funcionarios]
+command=/caminho/para/seu/projeto/.venv/bin/gunicorn --workers 3 --bind unix:/run/gunicorn.sock controle_funcionarios.wsgi:application
+directory=/caminho/para/seu/projeto
+user=seu-usuario
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/controle-funcionarios/gunicorn.err.log
+stdout_logfile=/var/log/controle-funcionarios/gunicorn.out.log
+```
+
+## Manutenção
+
+### Backup do Banco de Dados
+```bash
+pg_dump controle_funcionarios > backup.sql
+```
+
+### Atualização do Sistema
+```bash
+git pull
+source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py collectstatic --noinput
+sudo supervisorctl restart controle-funcionarios
+```
+
+## Segurança
+
+- Mantenha o Django e todas as dependências atualizadas
+- Use HTTPS em produção
+- Faça backup regularmente
+- Monitore os logs do sistema
+- Configure corretamente o firewall
+
+## Suporte
+
+Para suporte, entre em contato através de [seu-email@dominio.com]
