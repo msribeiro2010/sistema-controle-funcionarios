@@ -1,0 +1,2 @@
+localhost:5432:*:postgres:mar
+pip install -r requirements.txt

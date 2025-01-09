@@ -1,53 +1,98 @@
-{% extends 'funcionarios/base.html' %}
-
-{% block title %}Registrar Férias - {{ block.super }}{% endblock %}
+{% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Registrar Período de Férias</h5>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="funcionario" class="form-label">Selecione o Funcionário</label>
-                        <select class="form-select" id="funcionario" name="funcionario" required>
-                            <option value="">Escolha um funcionário</option>
-                            {% for funcionario in funcionarios %}
-                                <option value="{{ funcionario.id }}">
-                                    {{ funcionario.nome }} ({{ funcionario.dias_ferias_disponiveis }} dias disponíveis)
-                                </option>
-                            {% endfor %}
-                        </select>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Solicitar Férias</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Dias de férias disponíveis:</strong> {{ funcionario.dias_ferias_disponiveis }}
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="data_inicio" class="form-label">Data de Início das Férias</label>
+
+                    <form method="post" id="feriaForm">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            <label for="data_inicio">Data de Início</label>
                             <input type="date" class="form-control" id="data_inicio" name="data_inicio" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="data_fim" class="form-label">Data de Retorno ao Trabalho</label>
+                        
+                        <div class="form-group mb-3">
+                            <label for="data_fim">Data de Fim</label>
                             <input type="date" class="form-control" id="data_fim" name="data_fim" required>
                         </div>
-                    </div>
-                    <div class="alert alert-info">
-                        <h6 class="alert-heading">Importante:</h6>
-                        <ul class="mb-0">
-                            <li>Verifique se o funcionário possui dias suficientes disponíveis</li>
-                            <li>A data de retorno deve ser o primeiro dia útil após as férias</li>
-                            <li>O período mínimo de férias é de 5 dias corridos</li>
-                        </ul>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Voltar</a>
-                        <button type="submit" class="btn btn-primary">Confirmar Registro</button>
-                    </div>
-                </form>
+
+                        <div id="diasCalculados" class="alert alert-secondary d-none">
+                            Dias selecionados: <span id="totalDias">0</span>
+                        </div>
+
+                        <div id="conflitosAlert" class="alert alert-warning d-none">
+                            <strong>Atenção!</strong> Existem conflitos com outros servidores do mesmo cargo neste período.
+                            <div id="listaConflitos"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'servidor_dashboard' %}" class="btn btn-secondary">Voltar</a>
+                            <button type="submit" class="btn btn-primary">Solicitar Férias</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dataInicio = document.getElementById('data_inicio');
+    const dataFim = document.getElementById('data_fim');
+    const diasCalculados = document.getElementById('diasCalculados');
+    const totalDias = document.getElementById('totalDias');
+    const conflitosAlert = document.getElementById('conflitosAlert');
+    const listaConflitos = document.getElementById('listaConflitos');
+    const diasDisponiveis = {{ funcionario.dias_ferias_disponiveis }};
+
+    function calcularDias() {
+        if (dataInicio.value && dataFim.value) {
+            const inicio = new Date(dataInicio.value);
+            const fim = new Date(dataFim.value);
+            const diffTime = Math.abs(fim - inicio);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            
+            diasCalculados.classList.remove('d-none');
+            totalDias.textContent = diffDays;
+
+            if (diffDays > diasDisponiveis) {
+                diasCalculados.classList.remove('alert-secondary');
+                diasCalculados.classList.add('alert-danger');
+                totalDias.textContent = `${diffDays} (excede o limite disponível de ${diasDisponiveis} dias)`;
+            } else {
+                diasCalculados.classList.remove('alert-danger');
+                diasCalculados.classList.add('alert-secondary');
+            }
+
+            // Verificar conflitos via AJAX
+            fetch(`/api/verificar-conflitos/?inicio=${dataInicio.value}&fim=${dataFim.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.conflitos && data.conflitos.length > 0) {
+                        conflitosAlert.classList.remove('d-none');
+                        listaConflitos.innerHTML = '<ul>' + 
+                            data.conflitos.map(c => `<li>${c}</li>`).join('') + 
+                            '</ul>';
+                    } else {
+                        conflitosAlert.classList.add('d-none');
+                    }
+                });
+        }
+    }
+
+    dataInicio.addEventListener('change', calcularDias);
+    dataFim.addEventListener('change', calcularDias);
+});
+</script>
 {% endblock %}

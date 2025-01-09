@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Feriados {{ ano }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Calendário de Feriados {{ ano }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Tipo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for feriado in feriados %}
+                                <tr>
+                                    <td>{{ feriado.data|date:"d/m/Y" }}</td>
+                                    <td>{{ feriado.descricao }}</td>
+                                    <td>
+                                        <span class="badge {% if feriado.tipo == 'NACIONAL' %}bg-danger{% elif feriado.tipo == 'ESTADUAL' %}bg-warning{% elif feriado.tipo == 'MUNICIPAL' %}bg-info{% elif feriado.tipo == 'RECESSO' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ feriado.get_tipo_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">Nenhum feriado cadastrado para {{ ano }}.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-3">
+                        <h5>Legenda:</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-danger">Nacional</span>
+                            <span class="badge bg-warning">Estadual</span>
+                            <span class="badge bg-info">Municipal</span>
+                            <span class="badge bg-success">Recesso</span>
+                            <span class="badge bg-secondary">Facultativo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

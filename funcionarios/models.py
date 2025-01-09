@@ -1,8 +1,8 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from datetime import date
+from datetime import date, timedelta
 
 class Funcionario(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='Usuário')
@@ -19,6 +19,58 @@ class Funcionario(models.Model):
     def __str__(self):
         return f"{self.nome} ({self.matricula})"
 
+class Feriado(models.Model):
+    data = models.DateField('Data')
+    descricao = models.CharField('Descrição', max_length=100)
+    tipo = models.CharField('Tipo', max_length=20, choices=[
+        ('NACIONAL', 'Nacional'),
+        ('ESTADUAL', 'Estadual'),
+        ('MUNICIPAL', 'Municipal'),
+        ('FACULTATIVO', 'Facultativo'),
+        ('RECESSO', 'Recesso')
+    ])
+    recorrente = models.BooleanField('Recorrente', default=True, help_text='Se marcado, o feriado se repete todos os anos')
+
+    class Meta:
+        verbose_name = 'Feriado'
+        verbose_name_plural = 'Feriados'
+        ordering = ['data']
+        unique_together = ['data', 'tipo']
+
+    def __str__(self):
+        return f"{self.descricao} ({self.data.strftime('%d/%m/%Y')})"
+
+    @staticmethod
+    def is_dia_util(data):
+        """Verifica se uma data é dia útil (não é fim de semana nem feriado)"""
+        # Verifica se é fim de semana
+        if data.weekday() >= 5:  # 5 = Sábado, 6 = Domingo
+            return False
+        
+        # Verifica se é feriado
+        feriados = Feriado.objects.filter(data=data)
+        if feriados.exists():
+            return False
+        
+        # Verifica feriados recorrentes (mesma data em qualquer ano)
+        feriados_recorrentes = Feriado.objects.filter(
+            data__month=data.month,
+            data__day=data.day,
+            recorrente=True
+        )
+        if feriados_recorrentes.exists():
+            return False
+        
+        return True
+
+    @staticmethod
+    def proximo_dia_util(data):
+        """Retorna o próximo dia útil após a data fornecida"""
+        proximo_dia = data
+        while not Feriado.is_dia_util(proximo_dia):
+            proximo_dia += timedelta(days=1)
+        return proximo_dia
+
 class Ferias(models.Model):
     STATUS_CHOICES = [
         ('AGENDADO', 'Agendado'),
@@ -26,64 +78,130 @@ class Ferias(models.Model):
         ('USUFRUIDO', 'Usufruído'),
         ('CANCELADO', 'Cancelado'),
     ]
-
-    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, related_name='ferias', verbose_name='Funcionário')
-    data_inicio = models.DateField('Data de Início', default=date.today)
-    data_fim = models.DateField('Data de Fim', default=date.today)
-    dias_utilizados = models.IntegerField('Dias Utilizados')
-    status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default='AGENDADO')
-    data_criacao = models.DateTimeField('Data de Criação', default=timezone.now)
-    data_atualizacao = models.DateTimeField('Data de Atualização', auto_now=True)
-
-    def save(self, *args, **kwargs):
-        # Se é uma nova instância (não tem ID ainda)
-        if not self.pk:
-            # Deduz os dias de férias do saldo do funcionário
-            self.funcionario.dias_ferias_disponiveis -= self.dias_utilizados
-            self.funcionario.save()
+    
+    funcionario = models.ForeignKey('Funcionario', on_delete=models.CASCADE)
+    data_inicio = models.DateField()
+    data_fim = models.DateField()
+    data_retorno = models.DateField(null=True, blank=True)
+    dias_utilizados = models.IntegerField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='AGENDADO')
+    
+    def calcular_data_retorno(self):
+        """Calcula a data de retorno considerando finais de semana e feriados."""
+        data_retorno = self.data_fim + timedelta(days=1)
         
-        # Atualiza o status baseado nas datas
-        hoje = date.today()
-        if hoje > self.data_fim:
-            self.status = 'USUFRUIDO'
-        elif hoje >= self.data_inicio and hoje <= self.data_fim:
-            self.status = 'EM_ANDAMENTO'
+        while True:
+            # Verifica se é final de semana (5 = Sábado, 6 = Domingo)
+            if data_retorno.weekday() >= 5:
+                data_retorno += timedelta(days=1)
+                continue
+            
+            # Verifica se é feriado (incluindo feriados recorrentes)
+            feriado_normal = Feriado.objects.filter(data=data_retorno).exists()
+            feriado_recorrente = Feriado.objects.filter(
+                data__month=data_retorno.month,
+                data__day=data_retorno.day,
+                recorrente=True
+            ).exists()
+            
+            if feriado_normal or feriado_recorrente:
+                data_retorno += timedelta(days=1)
+                continue
+            
+            break
         
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        # Antes de excluir, devolve os dias ao saldo do funcionário
-        # Apenas se o status não for 'USUFRUIDO'
-        if self.status != 'USUFRUIDO':
-            self.funcionario.dias_ferias_disponiveis += self.dias_utilizados
-            self.funcionario.save()
-        super().delete(*args, **kwargs)
+        return data_retorno
+    
+    def verificar_conflitos(self):
+        """Verifica se há conflito com outras férias do mesmo cargo."""
+        conflitos = Ferias.objects.filter(
+            funcionario__cargo=self.funcionario.cargo,
+            status__in=['AGENDADO', 'EM_ANDAMENTO'],
+            data_inicio__lte=self.data_fim,
+            data_fim__gte=self.data_inicio
+        ).exclude(id=self.pk)
+        return conflitos
 
     def clean(self):
+        """Validação do modelo."""
         if self.data_inicio and self.data_fim:
             if self.data_inicio > self.data_fim:
                 raise ValidationError('A data de início não pode ser posterior à data de fim.')
             
             # Calcula os dias utilizados
             dias = (self.data_fim - self.data_inicio).days + 1
-            if dias > self.funcionario.dias_ferias_disponiveis and not self.pk:
+            if not self.pk and dias > self.funcionario.dias_ferias_disponiveis:
                 raise ValidationError(
                     f'Dias solicitados ({dias}) excedem os dias disponíveis '
                     f'({self.funcionario.dias_ferias_disponiveis}).'
                 )
             self.dias_utilizados = dias
+            
+            # Verifica conflitos
+            if self.verificar_conflitos().exists():
+                nomes_conflitantes = ', '.join([f.funcionario.nome for f in self.verificar_conflitos()])
+                raise ValidationError(
+                    f'Conflito de férias com: {nomes_conflitantes}. Já existe outro funcionário do mesmo cargo com férias agendadas neste período.'
+                )
 
-    def __str__(self):
-        return f"Férias de {self.funcionario.nome} - {self.get_status_display()}"
-
+    def save(self, *args, **kwargs):
+        # Calcula a data de retorno antes de salvar
+        self.data_retorno = self.calcular_data_retorno()
+        
+        # Se é um novo registro (não tem pk ainda)
+        if not self.pk:
+            self.funcionario.dias_ferias_disponiveis -= self.dias_utilizados
+            self.funcionario.save()
+        
+        # Se está sendo cancelado
+        if self.status == 'CANCELADO' and self.pk:
+            ferias_anterior = Ferias.objects.get(pk=self.pk)
+            if ferias_anterior.status != 'CANCELADO':
+                self.funcionario.dias_ferias_disponiveis += self.dias_utilizados
+                if self.funcionario.dias_ferias_disponiveis > 30:
+                    self.funcionario.dias_ferias_disponiveis = 30
+                self.funcionario.save()
+        
+        # Atualiza o status baseado nas datas
+        hoje = date.today()
+        if hoje > self.data_fim and self.status != 'CANCELADO':
+            self.status = 'USUFRUIDO'
+        elif hoje >= self.data_inicio and hoje <= self.data_fim and self.status != 'CANCELADO':
+            self.status = 'EM_ANDAMENTO'
+        
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        """Ao deletar férias, retorna os dias ao funcionário."""
+        if self.status != 'CANCELADO':
+            self.funcionario.dias_ferias_disponiveis += self.dias_utilizados
+            if self.funcionario.dias_ferias_disponiveis > 30:
+                self.funcionario.dias_ferias_disponiveis = 30
+            self.funcionario.save()
+        super().delete(*args, **kwargs)
+    
     class Meta:
         verbose_name = 'Férias'
         verbose_name_plural = 'Férias'
         ordering = ['-data_inicio']
 
+    def __str__(self):
+        return f"Férias de {self.funcionario.nome} - {self.get_status_display()}"
+
+    def atualizar_status(self):
+        """Atualiza manualmente o status das férias com base na data atual."""
+        hoje = date.today()
+        if hoje > self.data_fim and self.status != 'CANCELADO':
+            self.status = 'USUFRUIDO'
+        elif hoje >= self.data_inicio and hoje <= self.data_fim and self.status != 'CANCELADO':
+            self.status = 'EM_ANDAMENTO'
+        self.save()
+
 class Plantao(models.Model):
     TIPO_CHOICES = [
-        ('fds', 'Fim de Semana'),
+        ('sabado', 'Sábado'),
+        ('domingo', 'Domingo'),
+        ('fds', 'Fim de Semana Completo'),
         ('feriado', 'Feriado'),
     ]
 
@@ -91,6 +209,24 @@ class Plantao(models.Model):
     data = models.DateField('Data')
     tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES)
     observacoes = models.TextField('Observações', blank=True, null=True)
+    folgas_geradas = models.IntegerField('Folgas Geradas', default=0)
+    folgas_utilizadas = models.IntegerField('Folgas Utilizadas', default=0)
+    folgas_restantes = models.IntegerField('Folgas Restantes', default=0)
+
+    def save(self, *args, **kwargs):
+        # Define o número de folgas com base no tipo de plantão
+        if not self.pk:  # Apenas na criação
+            if self.tipo == 'sabado' or self.tipo == 'domingo':
+                self.folgas_geradas = 1  # 1 folga para plantão de sábado ou domingo
+            elif self.tipo == 'fds':
+                self.folgas_geradas = 2  # 2 folgas para plantão de fim de semana completo
+            else:
+                self.folgas_geradas = 1  # 1 folga para plantão em feriado
+            self.folgas_restantes = self.folgas_geradas
+        
+        # Sempre atualiza folgas restantes
+        self.folgas_restantes = self.folgas_geradas - self.folgas_utilizadas
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Plantão'
@@ -99,3 +235,80 @@ class Plantao(models.Model):
 
     def __str__(self):
         return f"Plantão de {self.funcionario.nome} em {self.data}"
+
+class UsoFolga(models.Model):
+    plantao = models.ForeignKey(Plantao, on_delete=models.CASCADE, related_name='usos_folga', verbose_name='Plantão')
+    data = models.DateField('Data da Folga')
+    observacoes = models.TextField('Observações', blank=True, null=True)
+    data_criacao = models.DateTimeField('Data de Criação', auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.pk:  # Se é uma nova folga
+            if self.plantao.folgas_restantes <= 0:
+                raise ValidationError('Não há folgas disponíveis para este plantão.')
+            self.plantao.folgas_utilizadas += 1
+            self.plantao.save()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.plantao.folgas_utilizadas -= 1
+        self.plantao.save()
+        super().delete(*args, **kwargs)
+
+    class Meta:
+        verbose_name = 'Uso de Folga'
+        verbose_name_plural = 'Usos de Folgas'
+        ordering = ['-data']
+
+    def __str__(self):
+        return f"Folga de {self.plantao.funcionario.nome} em {self.data}"
+
+class Documento(models.Model):
+    funcionario = models.ForeignKey('Funcionario', on_delete=models.CASCADE, related_name='documentos', verbose_name='Funcionário')
+    titulo = models.CharField('Título', max_length=100)
+    arquivo = models.FileField('Arquivo', upload_to='documentos/%Y/%m/')
+    tipo = models.CharField('Tipo', max_length=50, choices=[
+        ('FERIAS', 'Férias'),
+        ('ATESTADO', 'Atestado'),
+        ('DECLARACAO', 'Declaração'),
+        ('OUTROS', 'Outros')
+    ])
+    data_upload = models.DateTimeField('Data de Upload', auto_now_add=True)
+    observacoes = models.TextField('Observações', blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Documento'
+        verbose_name_plural = 'Documentos'
+        ordering = ['-data_upload']
+
+    def __str__(self):
+        return f"{self.titulo} - {self.funcionario.nome}"
+
+class Presenca(models.Model):
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, verbose_name='Funcionário')
+    data = models.DateField('Data')
+    presente = models.BooleanField('Presente', default=False)
+    observacoes = models.TextField('Observações', blank=True, null=True)
+    tipo_trabalho = models.CharField('Tipo de Trabalho', max_length=20, choices=[('PRESENCIAL', 'Presencial'), ('TELETRABALHO', 'Teletrabalho')], default='PRESENCIAL')
+
+    class Meta:
+        verbose_name = 'Presença'
+        verbose_name_plural = 'Presenças'
+        ordering = ['-data']
+
+    def __str__(self):
+        return f"Presença de {self.funcionario.nome} em {self.data}"
+
+class Folga(models.Model):
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, verbose_name='Funcionário')
+    data = models.DateField('Data')
+    tipo_folga = models.CharField('Tipo de Folga', max_length=20, choices=[('COMPENSATÓRIA', 'Compensatória'), ('LICENÇA', 'Licença')], default='COMPENSATÓRIA')
+    observacoes = models.TextField('Observações', blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Folga'
+        verbose_name_plural = 'Folgas'
+        ordering = ['-data']
+
+    def __str__(self):
+        return f"Folga de {self.funcionario.nome} em {self.data}"

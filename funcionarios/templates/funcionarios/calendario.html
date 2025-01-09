@@ -1,40 +1,48 @@
-{% extends 'funcionarios/base.html' %}
-
-{% block title %}Calendário - {{ block.super }}{% endblock %}
+{% extends 'base.html' %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">Calendário de Férias e Plantões - {{ inicio_mes|date:"F/Y"|title }}</h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Funcionário</th>
-                        <th>Tipo</th>
-                        <th>Período</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ferias in ferias %}
-                        <tr class="table-info">
-                            <td>{{ ferias.funcionario.nome }}</td>
-                            <td>Férias</td>
-                            <td>{{ ferias.data_inicio|date:"d/m/Y" }} - {{ ferias.data_fim|date:"d/m/Y" }}</td>
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Calendário de Férias e Plantões</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Férias</th>
+                            <th>Plantões</th>
                         </tr>
-                    {% endfor %}
-                    
-                    {% for plantao in plantoes %}
-                        <tr class="table-warning">
-                            <td>{{ plantao.funcionario.nome }}</td>
-                            <td>Plantão - {{ plantao.get_tipo_display }}</td>
-                            <td>{{ plantao.data|date:"d/m/Y" }}</td>
+                    </thead>
+                    <tbody>
+                        {% for data in calendario %}
+                        <tr>
+                            <td>{{ data.data|date:"d/m/Y" }}</td>
+                            <td>
+                                {% for ferias in data.ferias %}
+                                <div>
+                                    {{ ferias.funcionario.nome }}
+                                    <span class="badge {% if ferias.status == 'AGENDADO' %}bg-primary{% elif ferias.status == 'EM_ANDAMENTO' %}bg-success{% elif ferias.status == 'USUFRUIDO' %}bg-info{% else %}bg-secondary{% endif %}">
+                                        {{ ferias.get_status_display }}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for plantao in data.plantoes %}
+                                <div>
+                                    {{ plantao.funcionario.nome }}
+                                    <span class="badge bg-primary">{{ plantao.get_tipo_display }}</span>
+                                </div>
+                                {% endfor %}
+                            </td>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

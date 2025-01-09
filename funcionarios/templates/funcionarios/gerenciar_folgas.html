@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Gerenciar Folgas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Gerenciar Folgas</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="tipo_folga" class="form-label">Tipo de Folga</label>
+            <select class="form-select" id="tipo_folga" name="tipo_folga" required>
+                <option value="COMPENSATÓRIA">Compensatória</option>
+                <option value="LICENÇA">Licença</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="dias" class="form-label">Selecione os Dias</label>
+            <input type="text" class="form-control" id="dias" name="dias" placeholder="Selecione os dias" required>
+        </div>
+        <div class="mb-3">
+            <label for="observacoes" class="form-label">Observações</label>
+            <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Registrar Folga</button>
+    </form>
+
+    <h3 class="mt-5">Histórico de Folgas</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Tipo de Folga</th>
+                <th>Observações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for folga in folgas %}
+            <tr>
+                <td>{{ folga.data|date:"d/m/Y" }}</td>
+                <td>{{ folga.get_tipo_folga_display }}</td>
+                <td>{{ folga.observacoes }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('dias');
+        const picker = new Pikaday({
+            field: input,
+            format: 'DD/MM/YYYY',
+            multiple: true,
+            toString(date, format) {
+                const day = date.getDate();
+                const month = date.getMonth() + 1;
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            },
+            parse(dateString, format) {
+                const parts = dateString.split('/');
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const year = parseInt(parts[2], 10);
+                return new Date(year, month, day);
+            }
+        });
+    });
+</script>
+{% endblock %} 

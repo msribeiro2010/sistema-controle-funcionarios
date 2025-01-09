@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Presença{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Presença</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="data" class="form-label">Data</label>
+            <input type="date" class="form-control" id="data" name="data" value="{{ presenca.data|date:'Y-m-d' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="tipo_trabalho" class="form-label">Tipo de Trabalho</label>
+            <select class="form-select" id="tipo_trabalho" name="tipo_trabalho" required>
+                <option value="PRESENCIAL" {% if presenca.tipo_trabalho == 'PRESENCIAL' %}selected{% endif %}>Presencial</option>
+                <option value="TELETRABALHO" {% if presenca.tipo_trabalho == 'TELETRABALHO' %}selected{% endif %}>Teletrabalho</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="observacoes" class="form-label">Observações</label>
+            <textarea class="form-control" id="observacoes" name="observacoes" rows="3">{{ presenca.observacoes }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+    </form>
+</div>
+{% endblock %} 

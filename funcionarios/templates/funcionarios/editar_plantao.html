@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Plantão{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Plantão</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="data" class="form-label">Data</label>
+            <input type="date" class="form-control" id="data" name="data" value="{{ plantao.data|date:'Y-m-d' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="tipo" class="form-label">Tipo</label>
+            <select class="form-select" id="tipo" name="tipo" required>
+                <option value="sabado" {% if plantao.tipo == 'sabado' %}selected{% endif %}>Sábado</option>
+                <option value="domingo" {% if plantao.tipo == 'domingo' %}selected{% endif %}>Domingo</option>
+                <option value="fds" {% if plantao.tipo == 'fds' %}selected{% endif %}>Fim de Semana Completo</option>
+                <option value="feriado" {% if plantao.tipo == 'feriado' %}selected{% endif %}>Feriado</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="observacoes" class="form-label">Observações</label>
+            <textarea class="form-control" id="observacoes" name="observacoes" rows="3">{{ plantao.observacoes }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+    </form>
+</div>
+{% endblock %} 

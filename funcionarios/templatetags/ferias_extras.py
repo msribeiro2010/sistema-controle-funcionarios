@@ -8,3 +8,11 @@ def get(dictionary, key):
     if dictionary is None:
         return None
     return dictionary.get(key)
+
+@register.filter
+def get_item(dictionary, key):
+    """
+    Template filter para acessar um item de um dicionário usando uma chave.
+    Uso: {{ dictionary|get_item:key }}
+    """
+    return dictionary.get(key, [])

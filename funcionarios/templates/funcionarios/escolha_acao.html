@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .card-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .card-title {
+        margin-bottom: 1rem;
+    }
+    .btn {
+        margin-top: auto;
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h2 class="mb-4">Bem-vindo(a), {{ funcionario.nome }}</h2>
+            <p class="lead mb-5">O que você gostaria de fazer hoje?</p>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Gerenciar Férias</h5>
+                            <p class="card-text">
+                                Solicite suas férias, verifique o status das solicitações e gerencie seus períodos de descanso.
+                                <br><br>
+                                <strong>Dias disponíveis: {{ funcionario.dias_ferias_disponiveis }}</strong>
+                            </p>
+                            <a href="{% url 'registrar_ferias_funcionario' %}" class="btn btn-primary">Solicitar Férias</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Gerenciar Plantões</h5>
+                            <p class="card-text">
+                                Registre seus plantões, acompanhe suas folgas acumuladas e gerencie sua escala.
+                                <br><br>
+                                <strong>Total de plantões: {{ total_plantoes }}</strong>
+                            </p>
+                            <a href="{% url 'registrar_plantao_funcionario' %}" class="btn btn-primary">Registrar Plantão</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Gerenciar Presencial/Remoto</h5>
+                            <p class="card-text">Registre e acompanhe Presencial/Remoto.</p>
+                            <a href="{% url 'gerenciar_presenca' %}" class="btn btn-primary">Gerenciar Presencial/Remoto</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Gerenciar Folgas</h5>
+                            <p class="card-text">Registre e acompanhe suas folgas.</p>
+                            <a href="{% url 'gerenciar_folgas' %}" class="btn btn-primary">Gerenciar Folgas</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'servidor_dashboard' %}" class="btn btn-secondary">
+                    Ver Meu Painel Completo
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

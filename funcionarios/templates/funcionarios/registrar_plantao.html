@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Plantão{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Registrar Plantão</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="data" class="form-label">Data</label>
+            <input type="date" class="form-control" id="data" name="data" required>
+        </div>
+        <div class="mb-3">
+            <label for="tipo" class="form-label">Tipo</label>
+            <select class="form-select" id="tipo" name="tipo" required>
+                <option value="sabado">Sábado</option>
+                <option value="domingo">Domingo</option>
+                <option value="fds">Fim de Semana Completo</option>
+                <option value="feriado">Feriado</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="observacoes" class="form-label">Observações</label>
+            <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Registrar Plantão</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dataInput = document.getElementById('data');
+        const tipoSelect = document.getElementById('tipo');
+
+        dataInput.addEventListener('change', function() {
+            const date = new Date(this.value);
+            const day = date.getDay();
+
+            switch (day) {
+                case 5: // Sexta-feira
+                    tipoSelect.value = 'sexta';
+                    break;
+                case 6: // Sábado
+                    tipoSelect.value = 'sabado';
+                    break;
+                case 0: // Domingo
+                    tipoSelect.value = 'domingo';
+                    break;
+                default:
+                    // Verificar se é feriado
+                    fetch(`/api/verificar-feriado/?data=${this.value}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.feriado) {
+                                tipoSelect.value = 'feriado';
+                            } else {
+                                tipoSelect.value = '';
+                            }
+                        });
+                    break;
+            }
+        });
+    });
+</script>
+{% endblock %} 
