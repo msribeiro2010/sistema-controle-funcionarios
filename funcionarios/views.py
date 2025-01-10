@@ -159,9 +159,21 @@ def registrar_plantao_funcionario(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        data = datetime.strptime(request.POST['data'], '%Y-%m-%d').date()
-        tipo = request.POST['tipo']
+        try:
+            data = datetime.strptime(request.POST['data'], '%d/%m/%Y').date()  # Adjusted to handle 'dd/mm/yyyy' format
+        except ValueError:
+            data = datetime.strptime(request.POST['data'], '%Y-%m-%d').date()  # Fallback to 'yyyy-mm-dd' format
         observacoes = request.POST.get('observacoes', '')
+        dias_da_semana = {
+            'Monday': 'Segunda-feira',
+            'Tuesday': 'Terça-feira',
+            'Wednesday': 'Quarta-feira',
+            'Thursday': 'Quinta-feira',
+            'Friday': 'Sexta-feira',
+            'Saturday': 'Sábado',
+            'Sunday': 'Domingo'
+        }
+        tipo = dias_da_semana[data.strftime('%A')]  # Translate to Portuguese
 
         # Verificar se já existe plantão na data
         plantao_existente = Plantao.objects.filter(
@@ -176,7 +188,7 @@ def registrar_plantao_funcionario(request):
         Plantao.objects.create(
             funcionario=funcionario,
             data=data,
-            tipo=tipo,
+            tipo=tipo,  # Set the 'Tipo' field
             observacoes=observacoes
         )
 
@@ -384,9 +396,23 @@ def editar_plantao(request, plantao_id):
         tipo = request.POST.get('tipo')
         observacoes = request.POST.get('observacoes', '')
         
-        if data and tipo:
-            plantao.data = datetime.strptime(data, '%Y-%m-%d').date()
-            plantao.tipo = tipo
+        if data:
+            try:
+                data = datetime.strptime(data, '%d/%m/%Y').date()  # Try 'dd/mm/yyyy' format
+            except ValueError:
+                data = datetime.strptime(data, '%Y-%m-%d').date()  # Fallback to 'yyyy-mm-dd' format
+            dias_da_semana = {
+                'Monday': 'Segunda-feira',
+                'Tuesday': 'Terça-feira',
+                'Wednesday': 'Quarta-feira',
+                'Thursday': 'Quinta-feira',
+                'Friday': 'Sexta-feira',
+                'Saturday': 'Sábado',
+                'Sunday': 'Domingo'
+            }
+            tipo = dias_da_semana[data.strftime('%A')]  # Translate to Portuguese
+            plantao.data = data
+            plantao.tipo = tipo  # Set the 'Tipo' field
             plantao.observacoes = observacoes
             plantao.save()
             messages.success(request, 'Plantão atualizado com sucesso!')
