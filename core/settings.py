@@ -69,6 +69,9 @@ MIDDLEWARE = [
 # --------------------------------------------
 DATABASES = {
     'default': env.db(),
+    'ENGINE': 'django.db.backends.postgresql',
+
+
 }
 
 
