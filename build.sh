@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -o errexit
 
-# Apenas o essencial
+echo "Installing dependencies..."
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-mkdir -p staticfiles
-python manage.py migrate --noinput 
+
+echo "Running migrations..."
+python manage.py migrate --noinput
+
+echo "Build completed successfully!" 
