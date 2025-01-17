@@ -167,6 +167,7 @@ def registrar_plantao_funcionario(request):
 
     if request.method == 'POST':
         try:
+<<<<<<< HEAD
             data = datetime.strptime(request.POST['data'], '%Y-%m-%d').date()
             observacoes = request.POST.get('observacoes', '')
             
@@ -182,6 +183,22 @@ def registrar_plantao_funcionario(request):
                 else:
                     messages.error(request, 'Data selecionada não é um fim de semana ou feriado.')
                     return redirect('registrar_plantao_funcionario')
+=======
+            data = datetime.strptime(request.POST['data'], '%d/%m/%Y').date()  # Adjusted to handle 'dd/mm/yyyy' format
+        except ValueError:
+            data = datetime.strptime(request.POST['data'], '%Y-%m-%d').date()  # Fallback to 'yyyy-mm-dd' format
+        observacoes = request.POST.get('observacoes', '')
+        dias_da_semana = {
+            'Monday': 'Segunda-feira',
+            'Tuesday': 'Terça-feira',
+            'Wednesday': 'Quarta-feira',
+            'Thursday': 'Quinta-feira',
+            'Friday': 'Sexta-feira',
+            'Saturday': 'Sábado',
+            'Sunday': 'Domingo'
+        }
+        tipo = dias_da_semana[data.strftime('%A')]  # Translate to Portuguese
+>>>>>>> f20754eaa2ae8dddd095e736f335c35dfe1230e7
 
             try:
                 plantao = Plantao(
@@ -204,6 +221,19 @@ def registrar_plantao_funcionario(request):
             messages.error(request, 'Formato de data inválido.')
             return redirect('registrar_plantao_funcionario')
 
+<<<<<<< HEAD
+=======
+        Plantao.objects.create(
+            funcionario=funcionario,
+            data=data,
+            tipo=tipo,  # Set the 'Tipo' field
+            observacoes=observacoes
+        )
+
+        messages.success(request, 'Plantão registrado com sucesso!')
+        return redirect('dashboard')
+
+>>>>>>> f20754eaa2ae8dddd095e736f335c35dfe1230e7
     return render(request, 'funcionarios/registrar_plantao.html', {'funcionario': funcionario})
 
 @login_required
