@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 set -o errexit
 
-# Instalar dependências
+# Apenas o essencial
 pip install -r requirements.txt
-
-# Coletar arquivos estáticos
-python manage.py collectstatic --noinput --clear
-
-# Executar migrações
+mkdir -p staticfiles
 python manage.py migrate --noinput 

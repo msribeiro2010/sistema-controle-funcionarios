@@ -25,14 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = False
 
 # Allow all hosts during deployment
-ALLOWED_HOSTS = [
-    '.onrender.com',
-    'localhost',
-    '127.0.0.1'
-]
+ALLOWED_HOSTS = ['*']
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
@@ -133,15 +129,13 @@ LOGOUT_REDIRECT_URL = '/login/'
 
 # Security Settings
 SECURE_SSL_REDIRECT = False
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = None
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
 # CORS Settings
-CORS_ALLOWED_ORIGINS = [
-    'https://*.onrender.com',
-]
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = []
+CORS_ALLOW_CREDENTIALS = False
 
 # Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"

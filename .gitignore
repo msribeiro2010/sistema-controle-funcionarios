@@ -1,7 +1,5 @@
-# Basics
-*.py[cod]
-__pycache__/
+__pycache__
+*.pyc
 .env
+staticfiles/
 db.sqlite3
-/staticfiles/
-.DS_Store
