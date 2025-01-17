@@ -3,9 +3,13 @@ services:
     name: sistema-controle-funcionarios
     env: python
     buildCommand: bash build.sh
-    startCommand: gunicorn core.wsgi:application
+    startCommand: bash start.sh
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
-        value: false 
+        value: false
+      - key: PORT
+        value: 8000 
