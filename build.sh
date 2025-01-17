@@ -18,7 +18,7 @@ python manage.py collectstatic --noinput
 # Executar migrações
 python manage.py migrate --noinput
 
-# Verificar instalação do gunicorn
-which gunicorn
+# Dar permissão ao script de inicialização
+chmod +x run.sh
 
 echo "Build completed successfully!" 
