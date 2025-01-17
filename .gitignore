@@ -1,58 +1,19 @@
-# Python
-__pycache__/
+# Basics
 *.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+__pycache__/
+.env
+.env.*
+!.env.example
 
 # Django
-*.log
-local_settings.py
+/staticfiles/
+/media/
 db.sqlite3
-db.sqlite3-journal
-media
-
-# Virtual Environment
-.env
-.venv
-venv/
-ENV/
 
 # IDE
-.idea/
 .vscode/
-*.swp
-*.swo
-
-# Static files
-staticfiles/
+.idea/
 
 # OS
 .DS_Store
 Thumbs.db
-.vercel
-
-# Adicione estas linhas
-/staticfiles/
-/media/
-/logs/
-*.pyc
-__pycache__/
-.env
-.env.*
-*.sqlite3

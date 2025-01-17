@@ -15,12 +15,7 @@ services:
         generateValue: true
       - key: DEBUG
         value: false
-      - key: DJANGO_SETTINGS_MODULE
-        value: core.settings
-      - key: PYTHONPATH
-        value: /opt/render/project/src
     healthCheckPath: /
-    autoDeploy: true
 
 databases:
   - name: sistema_controle_db
