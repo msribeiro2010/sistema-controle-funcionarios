@@ -3,22 +3,17 @@ services:
     name: sistema-controle-funcionarios
     env: python
     buildCommand: chmod +x build.sh && ./build.sh
-    startCommand: gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: gunicorn core.wsgi:application
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.9.0
-      - key: DATABASE_URL
-        fromDatabase:
-          name: sistema_controle_db
-          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
         value: false
-    healthCheckPath: /
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sistema_controle_db
+          property: connectionString
 
 databases:
   - name: sistema_controle_db
-    databaseName: sistema_controle
-    user: sistema_controle
     plan: free 

@@ -2,18 +2,6 @@
 *.py[cod]
 __pycache__/
 .env
-.env.*
-!.env.example
-
-# Django
-/staticfiles/
-/media/
 db.sqlite3
-
-# IDE
-.vscode/
-.idea/
-
-# OS
+/staticfiles/
 .DS_Store
-Thumbs.db
