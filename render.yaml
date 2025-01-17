@@ -3,7 +3,7 @@ services:
     name: sistema-controle-funcionarios
     env: python
     buildCommand: chmod +x build.sh && ./build.sh
-    startCommand: gunicorn core.wsgi:application
+    startCommand: gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
@@ -15,14 +15,12 @@ services:
         generateValue: true
       - key: DEBUG
         value: false
+      - key: DJANGO_SETTINGS_MODULE
+        value: core.settings
+      - key: PYTHONPATH
+        value: /opt/render/project/src
     healthCheckPath: /
     autoDeploy: true
-    buildFilter:
-      paths:
-        - requirements.txt
-        - "**.py"
-        - "**.html"
-        - build.sh
 
 databases:
   - name: sistema_controle_db

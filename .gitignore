@@ -46,3 +46,13 @@ staticfiles/
 .DS_Store
 Thumbs.db
 .vercel
+
+# Adicione estas linhas
+/staticfiles/
+/media/
+/logs/
+*.pyc
+__pycache__/
+.env
+.env.*
+*.sqlite3
