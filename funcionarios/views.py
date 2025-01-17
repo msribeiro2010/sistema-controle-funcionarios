@@ -167,7 +167,6 @@ def registrar_plantao_funcionario(request):
 
     if request.method == 'POST':
         try:
-<<<<<<< HEAD
             data = datetime.strptime(request.POST['data'], '%Y-%m-%d').date()
             observacoes = request.POST.get('observacoes', '')
             
@@ -183,57 +182,37 @@ def registrar_plantao_funcionario(request):
                 else:
                     messages.error(request, 'Data selecionada não é um fim de semana ou feriado.')
                     return redirect('registrar_plantao_funcionario')
-=======
-            data = datetime.strptime(request.POST['data'], '%d/%m/%Y').date()  # Adjusted to handle 'dd/mm/yyyy' format
-        except ValueError:
-            data = datetime.strptime(request.POST['data'], '%Y-%m-%d').date()  # Fallback to 'yyyy-mm-dd' format
-        observacoes = request.POST.get('observacoes', '')
-        dias_da_semana = {
-            'Monday': 'Segunda-feira',
-            'Tuesday': 'Terça-feira',
-            'Wednesday': 'Quarta-feira',
-            'Thursday': 'Quinta-feira',
-            'Friday': 'Sexta-feira',
-            'Saturday': 'Sábado',
-            'Sunday': 'Domingo'
-        }
-        tipo = dias_da_semana[data.strftime('%A')]  # Translate to Portuguese
->>>>>>> f20754eaa2ae8dddd095e736f335c35dfe1230e7
 
             try:
-                plantao = Plantao(
+                # Verificar se já existe um plantão para esta data
+                plantao_existente = Plantao.objects.filter(
+                    funcionario=funcionario,
+                    data=data
+                ).exists()
+
+                if plantao_existente:
+                    messages.error(request, 'Já existe um plantão registrado para esta data.')
+                    return redirect('registrar_plantao_funcionario')
+
+                # Criar o plantão
+                Plantao.objects.create(
                     funcionario=funcionario,
                     data=data,
                     tipo=tipo,
                     observacoes=observacoes
                 )
-                plantao.full_clean()
-                plantao.save()
+
                 messages.success(request, 'Plantão registrado com sucesso!')
-                return redirect('dashboard')
-            except ValidationError as e:
-                for field, errors in e.message_dict.items():
-                    for error in errors:
-                        messages.error(request, f'{error}')
+                return redirect('servidor_dashboard')
+
+            except Exception as e:
+                messages.error(request, f'Erro ao registrar plantão: {str(e)}')
                 return redirect('registrar_plantao_funcionario')
-                
+
         except ValueError:
-            messages.error(request, 'Formato de data inválido.')
+            messages.error(request, 'Data inválida.')
             return redirect('registrar_plantao_funcionario')
 
-<<<<<<< HEAD
-=======
-        Plantao.objects.create(
-            funcionario=funcionario,
-            data=data,
-            tipo=tipo,  # Set the 'Tipo' field
-            observacoes=observacoes
-        )
-
-        messages.success(request, 'Plantão registrado com sucesso!')
-        return redirect('dashboard')
-
->>>>>>> f20754eaa2ae8dddd095e736f335c35dfe1230e7
     return render(request, 'funcionarios/registrar_plantao.html', {'funcionario': funcionario})
 
 @login_required
@@ -439,31 +418,21 @@ def editar_plantao(request, plantao_id):
     
     if request.method == 'POST':
         data = request.POST.get('data')
-        tipo = request.POST.get('tipo')
-        observacoes = request.POST.get('observacoes', '')
+        observacoes = request.POST.get('observacoes')
         
         if data:
             try:
-                data = datetime.strptime(data, '%d/%m/%Y').date()  # Try 'dd/mm/yyyy' format
+                data = datetime.strptime(data, '%Y-%m-%d').date()
+                plantao.data = data
+                plantao.observacoes = observacoes
+                plantao.save()
+                messages.success(request, 'Plantão atualizado com sucesso!')
+                return redirect('servidor_dashboard')
             except ValueError:
-                data = datetime.strptime(data, '%Y-%m-%d').date()  # Fallback to 'yyyy-mm-dd' format
-            dias_da_semana = {
-                'Monday': 'Segunda-feira',
-                'Tuesday': 'Terça-feira',
-                'Wednesday': 'Quarta-feira',
-                'Thursday': 'Quinta-feira',
-                'Friday': 'Sexta-feira',
-                'Saturday': 'Sábado',
-                'Sunday': 'Domingo'
-            }
-            tipo = dias_da_semana[data.strftime('%A')]  # Translate to Portuguese
-            plantao.data = data
-            plantao.tipo = tipo  # Set the 'Tipo' field
-            plantao.observacoes = observacoes
-            plantao.save()
-            messages.success(request, 'Plantão atualizado com sucesso!')
-            return redirect('servidor_dashboard')
-
+                messages.error(request, 'Data inválida.')
+        else:
+            messages.error(request, 'Data é obrigatória.')
+    
     return render(request, 'funcionarios/editar_plantao.html', {'plantao': plantao})
 
 @login_required
