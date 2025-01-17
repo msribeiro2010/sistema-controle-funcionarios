@@ -1,81 +1,156 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block content %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <style>
     .card {
         height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
     }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
     .card-body {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        padding: 1.5rem;
     }
+
     .card-title {
         margin-bottom: 1rem;
+        color: #0d6efd;
+        font-weight: 600;
     }
+
     .btn {
         margin-top: auto;
     }
-</style>
 
+    .welcome-header {
+        background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #0d6efd;
+    }
+
+    .stats-badge {
+        background-color: #e9ecef;
+        padding: 0.5rem;
+        border-radius: 5px;
+        margin: 1rem 0;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 text-center">
-            <h2 class="mb-4">Bem-vindo(a), {{ funcionario.nome }}</h2>
-            <p class="lead mb-5">O que você gostaria de fazer hoje?</p>
+        <div class="col-md-10">
+            <div class="welcome-header text-center">
+                <h2 class="mb-2">Bem-vindo(a), {{ funcionario.nome }}</h2>
+                <p class="lead mb-0">O que você gostaria de fazer hoje?</p>
+            </div>
+
             <div class="row">
                 <div class="col-md-6 mb-4">
-                    <div class="card h-100">
+                    <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Gerenciar Férias</h5>
-                            <p class="card-text">
+                            <div class="text-center">
+                                <i class="fas fa-umbrella-beach card-icon"></i>
+                            </div>
+                            <h5 class="card-title text-center">Gerenciar Férias</h5>
+                            <p class="card-text text-center">
                                 Solicite suas férias, verifique o status das solicitações e gerencie seus períodos de descanso.
-                                <br><br>
-                                <strong>Dias disponíveis: {{ funcionario.dias_ferias_disponiveis }}</strong>
                             </p>
-                            <a href="{% url 'registrar_ferias_funcionario' %}" class="btn btn-primary">Solicitar Férias</a>
+                            <div class="stats-badge text-center">
+                                <i class="fas fa-calendar-check"></i>
+                                Dias disponíveis: {{ funcionario.dias_ferias_disponiveis }}
+                            </div>
+                            <a href="{% url 'registrar_ferias_funcionario' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-plus me-2"></i>Solicitar Férias
+                            </a>
                         </div>
                     </div>
                 </div>
+
                 <div class="col-md-6 mb-4">
-                    <div class="card h-100">
+                    <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Gerenciar Plantões</h5>
-                            <p class="card-text">
+                            <div class="text-center">
+                                <i class="fas fa-user-clock card-icon"></i>
+                            </div>
+                            <h5 class="card-title text-center">Gerenciar Plantões</h5>
+                            <p class="card-text text-center">
                                 Registre seus plantões, acompanhe suas folgas acumuladas e gerencie sua escala.
-                                <br><br>
-                                <strong>Total de plantões: {{ total_plantoes }}</strong>
                             </p>
-                            <a href="{% url 'registrar_plantao_funcionario' %}" class="btn btn-primary">Registrar Plantão</a>
+                            <div class="stats-badge text-center">
+                                <i class="fas fa-clipboard-list"></i>
+                                Total de plantões: {{ total_plantoes }}
+                            </div>
+                            <a href="{% url 'registrar_plantao_funcionario' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-plus me-2"></i>Registrar Plantão
+                            </a>
                         </div>
                     </div>
                 </div>
+
                 <div class="col-md-6 mb-4">
-                    <div class="card h-100">
+                    <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Gerenciar Presencial/Remoto</h5>
-                            <p class="card-text">Registre e acompanhe Presencial/Remoto.</p>
-                            <a href="{% url 'gerenciar_presenca' %}" class="btn btn-primary">Gerenciar Presencial/Remoto</a>
+                            <div class="text-center">
+                                <i class="fas fa-building card-icon"></i>
+                            </div>
+                            <h5 class="card-title text-center">Gerenciar Presencial/Remoto</h5>
+                            <p class="card-text text-center">
+                                Registre e acompanhe seus dias de trabalho presencial e remoto.
+                            </p>
+                            <a href="{% url 'gerenciar_presenca' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-tasks me-2"></i>Gerenciar Presencial/Remoto
+                            </a>
                         </div>
                     </div>
                 </div>
+
                 <div class="col-md-6 mb-4">
-                    <div class="card h-100">
+                    <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Gerenciar Folgas</h5>
-                            <p class="card-text">Registre e acompanhe suas folgas.</p>
-                            <a href="{% url 'gerenciar_folgas' %}" class="btn btn-primary">Gerenciar Folgas</a>
+                            <div class="text-center">
+                                <i class="fas fa-coffee card-icon"></i>
+                            </div>
+                            <h5 class="card-title text-center">Gerenciar Folgas</h5>
+                            <p class="card-text text-center">
+                                Registre e acompanhe suas folgas compensatórias e licenças.
+                            </p>
+                            <a href="{% url 'gerenciar_folgas' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-calendar-plus me-2"></i>Gerenciar Folgas
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="mt-4">
-                <a href="{% url 'servidor_dashboard' %}" class="btn btn-secondary">
-                    Ver Meu Painel Completo
+
+            <div class="text-center mt-4">
+                <a href="{% url 'servidor_dashboard' %}" class="btn btn-lg btn-outline-primary">
+                    <i class="fas fa-columns me-2"></i>Ver Meu Painel Completo
                 </a>
             </div>
         </div>

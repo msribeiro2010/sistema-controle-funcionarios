@@ -1,0 +1,13 @@
+<div class="feriados-section">
+    <h3>Próximos Feriados</h3>
+    {% if feriados %}
+        {% for feriado in feriados %}
+            <div class="feriado-item">
+                <span class="feriado-data">{{ feriado.data|date:"d/m/Y" }}</span>
+                <span class="feriado-nome">{{ feriado.nome }}</span>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Não há feriados próximos.</p>
+    {% endif %}
+</div> 

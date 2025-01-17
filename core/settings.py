@@ -5,6 +5,7 @@ Django settings for core project.
 from pathlib import Path
 import os
 from decouple import config, Csv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,15 +14,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='your-secret-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = False
 
 # Allow all hosts during deployment
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    '.up.railway.app',
+    'localhost',
+    '127.0.0.1'
+]
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
-    'https://web-production-147e.up.railway.app',
-    'http://web-production-147e.up.railway.app'
+    'https://*.up.railway.app',
 ]
 
 # Application definition
@@ -35,6 +39,7 @@ INSTALLED_APPS = [
     'funcionarios.apps.FuncionariosConfig',
     'crispy_forms',
     'crispy_bootstrap5',
+    'corsheaders',
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -48,6 +53,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -74,10 +81,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
 
 # Password validation
@@ -104,8 +112,14 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static')
+]
+
+# Configuração simples para arquivos estáticos
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -127,22 +141,16 @@ LOGGING = {
         'handlers': ['console'],
         'level': 'INFO',
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
 }
 
 # Security Settings for Production
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     # Temporarily disable SSL redirect during deployment
-    SECURE_SSL_REDIRECT = False
+    SECURE_SSL_REDIRECT = False  # Vercel já lida com SSL
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
 
 # Configurações de Sessão e CSRF
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
@@ -159,3 +167,9 @@ CSRF_USE_SESSIONS = False  # Mudando para False para usar cookie
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_AGE = 86400  # 24 horas em segundos
 CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
+
+CORS_ALLOW_ALL_ORIGINS = True  # Apenas para desenvolvimento
+CORS_ALLOWED_ORIGINS = [
+    "https://*.vercel.app",
+]
+CORS_ALLOW_CREDENTIALS = True

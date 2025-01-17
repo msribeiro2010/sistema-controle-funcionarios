@@ -1,0 +1,26 @@
+{
+    "version": 2,
+    "builds": [{
+        "src": "core/wsgi.py",
+        "use": "@vercel/python",
+        "config": {
+            "maxLambdaSize": "15mb",
+            "runtime": "python3.9",
+            "buildCommand": "pip install --no-cache-dir -r requirements.txt"
+        }
+    }],
+    "routes": [
+        {
+            "src": "/static/(.*)",
+            "dest": "/static/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "core/wsgi.py"
+        }
+    ],
+    "env": {
+        "PYTHONPATH": ".",
+        "DJANGO_SETTINGS_MODULE": "core.settings"
+    }
+} 

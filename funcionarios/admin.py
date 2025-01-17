@@ -1,7 +1,28 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from .models import Funcionario, Ferias, Plantao, UsoFolga, Feriado, Documento
+from django.contrib import messages
+from .models import (
+    Funcionario, 
+    Ferias, 
+    Plantao, 
+    UsoFolga, 
+    Feriado, 
+    Documento,
+    Presenca,
+    Folga
+)
+from django.utils import timezone
+from datetime import date
+from django.db.models import Q
+from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.utils.html import format_html
+
+class FeriadoAdmin(admin.ModelAdmin):
+    list_display = ('descricao', 'tipo', 'recorrente')
+    list_filter = ('tipo', 'recorrente')
+    list_editable = ('tipo', 'recorrente')
 
 # Register your models here.
 
@@ -33,13 +54,29 @@ class FuncionarioAdmin(admin.ModelAdmin):
 
 @admin.register(Feriado)
 class FeriadoAdmin(admin.ModelAdmin):
-    list_display = ('data', 'descricao', 'tipo', 'recorrente')
-    list_filter = ('tipo', 'recorrente', 'data')
-    search_fields = ('descricao',)
+    list_display = ['data', 'descricao', 'tipo', 'recorrente']
+    list_filter = ['tipo', 'recorrente']
+    list_editable = ['tipo', 'recorrente']
+    search_fields = ['descricao']
     date_hierarchy = 'data'
-    list_editable = ('tipo', 'recorrente')
-    ordering = ('data',)
-    
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        hoje = date.today()
+        
+        # Filtrar feriados não recorrentes que já passaram
+        feriados_nao_recorrentes = Q(recorrente=False) & Q(data__gte=hoje)
+        
+        # Filtrar feriados recorrentes
+        feriados_recorrentes = Q(recorrente=True)
+        
+        return queryset.filter(feriados_nao_recorrentes | feriados_recorrentes)
+
+    def get_list_display(self, request):
+        if request.user.is_superuser:
+            return ('data', 'descricao', 'tipo', 'recorrente')
+        return ('data', 'descricao', 'tipo')
+
     fieldsets = (
         ('Informações Básicas', {
             'fields': ('data', 'descricao', 'tipo')
@@ -49,11 +86,6 @@ class FeriadoAdmin(admin.ModelAdmin):
             'description': 'Se marcado como recorrente, o feriado será considerado em todos os anos na mesma data.'
         }),
     )
-
-    def get_list_display(self, request):
-        if request.user.is_superuser:
-            return ('data', 'descricao', 'tipo', 'recorrente')
-        return ('data', 'descricao', 'tipo')
 
 @admin.register(Ferias)
 class FeriasAdmin(admin.ModelAdmin):
@@ -148,6 +180,16 @@ class UsoFolgaAdmin(admin.ModelAdmin):
             return True
         return request.user.is_superuser or obj.plantao.funcionario.usuario == request.user
 
+# Configuração do template admin
+class CustomAdminSite(admin.AdminSite):
+    def each_context(self, request):
+        context = super().each_context(request)
+        context['custom_messages'] = messages.get_messages(request)
+        return context
+
+admin_site = CustomAdminSite()
+
+# Registre seus modelos no admin personalizado
 @admin.register(Plantao)
 class PlantaoAdmin(admin.ModelAdmin):
     list_display = ('funcionario', 'data', 'tipo', 'folgas_geradas', 'folgas_utilizadas', 'folgas_restantes')
@@ -155,6 +197,18 @@ class PlantaoAdmin(admin.ModelAdmin):
     search_fields = ('funcionario__nome',)
     readonly_fields = ('folgas_geradas', 'folgas_restantes')
     inlines = [UsoFolgaInline]
+
+    def save_model(self, request, obj, form, change):
+        try:
+            obj.full_clean()
+            super().save_model(request, obj, form, change)
+            messages.success(request, 'Plantão salvo com sucesso!')
+        except ValidationError as e:
+            for field, errors in e.message_dict.items():
+                for error in errors:
+                    messages.error(request, f'{error}')
+            return False
+
     fieldsets = (
         ('Informações Básicas', {
             'fields': ('funcionario', 'data', 'tipo')
@@ -169,6 +223,11 @@ class PlantaoAdmin(admin.ModelAdmin):
         }),
     )
 
+    class Media:
+        css = {
+            'all': ('css/custom_admin.css',)
+        }
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if not request.user.is_superuser:
@@ -179,11 +238,6 @@ class PlantaoAdmin(admin.ModelAdmin):
         if not request.user.is_superuser:
             return ('funcionario',)
         return ()
-
-    def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser and not obj.funcionario_id:
-            obj.funcionario = Funcionario.objects.get(usuario=request.user)
-        super().save_model(request, obj, form, change)
 
     def has_module_permission(self, request):
         return True
@@ -255,3 +309,95 @@ class DocumentoAdmin(admin.ModelAdmin):
         if obj is None:
             return True
         return request.user.is_superuser or obj.funcionario.usuario == request.user
+
+@admin.register(Presenca)
+class PresencaAdmin(admin.ModelAdmin):
+    list_display = ('funcionario', 'data', 'tipo_trabalho', 'get_actions')
+    list_filter = ('tipo_trabalho', 'data')
+    search_fields = ('funcionario__nome',)
+    
+    def get_actions(self, obj):
+        if obj:
+            return format_html(
+                '<a href="{}" class="button">Editar</a> '
+                '<a href="{}" class="button" onclick="return confirm(\'Tem certeza que deseja excluir este registro?\')">Excluir</a>',
+                reverse('editar_presenca', args=[obj.id]),
+                reverse('excluir_presenca', args=[obj.id])
+            )
+    get_actions.short_description = 'Ações'
+    get_actions.allow_tags = True
+
+    def save_model(self, request, obj, form, change):
+        try:
+            obj.full_clean()
+            super().save_model(request, obj, form, change)
+            messages.success(request, 'Registro salvo com sucesso!')
+        except ValidationError as e:
+            for field, errors in e.message_dict.items():
+                for error in errors:
+                    messages.error(request, f'{error}')
+            return False
+
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('funcionario', 'data', 'tipo_trabalho')
+        }),
+        ('Observações', {
+            'fields': ('observacoes',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    class Media:
+        css = {
+            'all': ('css/custom_admin.css',)
+        }
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser:
+            return qs.filter(funcionario__usuario=request.user)
+        return qs
+
+    def has_module_permission(self, request):
+        return True
+
+    def has_add_permission(self, request):
+        return True
+
+    def has_change_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return request.user.is_superuser or obj.funcionario.usuario == request.user
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is None:
+            return True
+        return request.user.is_superuser or obj.funcionario.usuario == request.user
+
+@admin.register(Folga)
+class FolgaAdmin(admin.ModelAdmin):
+    list_display = ('funcionario', 'data', 'tipo_folga', 'get_actions')
+    list_filter = ('tipo_folga', 'data')
+    search_fields = ('funcionario__nome',)
+    
+    def get_actions(self, obj):
+        if obj:
+            return format_html(
+                '<a href="{}" class="button">Editar</a> '
+                '<a href="{}" class="button" onclick="return confirm(\'Tem certeza que deseja excluir esta folga?\')">Excluir</a>',
+                reverse('editar_folga', args=[obj.id]),
+                reverse('excluir_folga', args=[obj.id])
+            )
+    get_actions.short_description = 'Ações'
+    get_actions.allow_tags = True
+
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('funcionario', 'data', 'tipo_folga')
+        }),
+        ('Observações', {
+            'fields': ('observacoes',),
+            'classes': ('collapse',)
+        }),
+    )

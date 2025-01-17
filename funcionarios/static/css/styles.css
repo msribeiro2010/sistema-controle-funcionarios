@@ -1,0 +1,21 @@
+.feriados-section {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.feriado-item {
+    padding: 10px;
+    margin: 5px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.feriado-data {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.feriado-nome {
+    color: #6c757d;
+} 

@@ -2,203 +2,346 @@
 {% load static %}
 {% load custom_filters %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: none;
+        margin-bottom: 1rem;
+    }
+    
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,.075);
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .table td, .table th {
+        vertical-align: middle;
+    }
+    
+    .d-inline {
+        display: inline-block !important;
+        margin-left: 0.25rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>Bem-vindo(a), {{ funcionario.nome }}</h2>
-            <p class="lead">Dias de férias disponíveis: {{ dias_ferias_disponiveis }}</p>
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Minhas Férias</h5>
-                    <a href="{% url 'registrar_ferias_funcionario' %}" class="btn btn-primary">Solicitar Férias</a>
+    <!-- Cabeçalho com informações do funcionário -->
+    <div class="card mb-4">
+        <div class="card-body bg-primary text-white">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-0">Bem-vindo(a), {{ funcionario.nome }}</h2>
+                    <p class="mb-0">Matrícula: {{ funcionario.matricula }} | Cargo: {{ funcionario.cargo }}</p>
                 </div>
-                <div class="card-body">
-                    {% if ferias %}
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Início</th>
-                                        <th>Fim</th>
-                                        <th>Retorno</th>
-                                        <th>Dias</th>
-                                        <th>Status</th>
-                                        <th>Conflitos</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for f in ferias %}
-                                    <tr {% if f.id in ferias_com_conflito %}class="table-warning"{% endif %}>
-                                        <td>{{ f.data_inicio|date:"d/m/Y" }}</td>
-                                        <td>{{ f.data_fim|date:"d/m/Y" }}</td>
-                                        <td>{{ f.data_retorno|date:"d/m/Y" }}</td>
-                                        <td>{{ f.dias_utilizados }}</td>
-                                        <td>{{ f.get_status_display }}</td>
-                                        <td>
-                                            {% if f.id in ferias_com_conflito %}
-                                                <span class="text-danger">
-                                                    Conflito com: {{ ferias_com_conflito|get_item:f.id|join:", " }}
-                                                </span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if f.status == 'AGENDADO' %}
-                                                <a href="{% url 'editar_ferias' f.id %}" class="btn btn-sm btn-warning">Editar</a>
-                                                <form method="post" action="{% url 'cancelar_ferias' f.id %}" style="display: inline;">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir estas férias?')">
-                                                        Excluir
-                                                    </button>
-                                                </form>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="text-muted">Nenhuma férias registrada.</p>
-                    {% endif %}
+                <div class="col-md-4 text-md-end">
+                    <h4 class="mb-0">Férias Disponíveis: {{ dias_ferias_disponiveis }} dias</h4>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col">
-            <div class="card">
+    <!-- Cards de Resumo -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Plantões</h5>
+                    <h2 class="mb-0">{{ plantoes.count }}</h2>
+                    <small>Total de plantões</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Presenças</h5>
+                    <h2 class="mb-0">{{ presencas_mes.count }}</h2>
+                    <small>Presenças este mês</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Folgas</h5>
+                    <h2 class="mb-0">{{ folgas_mes.count }}</h2>
+                    <small>Folgas este mês</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Férias</h5>
+                    <h2 class="mb-0">{{ ferias.count }}</h2>
+                    <small>Períodos registrados</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de Plantões e Férias em Grid -->
+    <div class="row mb-4">
+        <!-- Meus Plantões -->
+        <div class="col-md-6">
+            <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Meus Plantões</h5>
-                    <a href="{% url 'registrar_plantao_funcionario' %}" class="btn btn-primary">Registrar Plantão</a>
+                    <a href="{% url 'registrar_plantao_funcionario' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Registrar Plantão
+                    </a>
                 </div>
-                <div class="card-body">
-                    {% if plantoes %}
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Data</th>
-                                        <th>Tipo</th>
-                                        <th>Folgas Geradas</th>
-                                        <th>Folgas Utilizadas</th>
-                                        <th>Folgas Restantes</th>
-                                        <th>Observações</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for p in plantoes %}
-                                    <tr>
-                                        <td>{{ p.data|date:"d/m/Y" }}</td>
-                                        <td>{{ p.get_tipo_display }}</td>
-                                        <td>{{ p.folgas_geradas }}</td>
-                                        <td>{{ p.folgas_utilizadas }}</td>
-                                        <td>{{ p.folgas_restantes }}</td>
-                                        <td>{{ p.observacoes|default:"-" }}</td>
-                                        <td>
-                                            <a href="{% url 'editar_plantao' p.id %}" class="btn btn-sm btn-warning">Editar</a>
-                                            <form method="post" action="{% url 'excluir_plantao' p.id %}" style="display: inline;">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="px-3">Data</th>
+                                    <th>Tipo</th>
+                                    <th>Folgas</th>
+                                    <th>Observações</th>
+                                    <th class="text-end px-3">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for plantao in plantoes %}
+                                <tr>
+                                    <td class="px-3">{{ plantao.data|date:"d/m/Y" }}</td>
+                                    <td>{{ plantao.get_tipo_display }}</td>
+                                    <td>{{ plantao.folgas_restantes }}</td>
+                                    <td>{{ plantao.observacoes|default:"-" }}</td>
+                                    <td class="text-end px-3">
+                                        <a href="{% url 'editar_plantao' plantao.id %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="post" action="{% url 'excluir_plantao' plantao.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este plantão?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-3">Nenhum plantão registrado.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Minhas Férias -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Minhas Férias</h5>
+                    <a href="{% url 'registrar_ferias' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Solicitar Férias
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="px-3">Início</th>
+                                    <th>Fim</th>
+                                    <th>Dias</th>
+                                    <th>Status</th>
+                                    <th class="text-end px-3">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for f in ferias %}
+                                <tr {% if f.id in ferias_com_conflito %}class="table-warning"{% endif %}>
+                                    <td class="px-3">{{ f.data_inicio|date:"d/m/Y" }}</td>
+                                    <td>{{ f.data_fim|date:"d/m/Y" }}</td>
+                                    <td>{{ f.dias_utilizados }}</td>
+                                    <td>
+                                        {{ f.get_status_display }}
+                                        {% if f.id in ferias_com_conflito %}
+                                            <span class="text-danger" title="Conflito com: {{ ferias_com_conflito|get_item:f.id|join:', ' }}">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end px-3">
+                                        {% if f.status == 'AGENDADO' %}
+                                            <a href="{% url 'editar_ferias' f.id %}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="post" action="{% url 'excluir_ferias' f.id %}" class="d-inline">
                                                 {% csrf_token %}
-                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este plantão?')">
-                                                    Excluir
+                                                <button type="submit" class="btn btn-sm btn-danger" 
+                                                        onclick="return confirm('Tem certeza que deseja excluir estas férias?')">
+                                                    <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="text-muted">Nenhum plantão registrado.</p>
-                    {% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-3">Nenhuma férias registrada.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Histórico de Presenças</h5>
+    <!-- Seção de Controles em Grid -->
+    <div class="row">
+        <!-- Controle de dias no Presencial -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Controle de dias no Presencial</h5>
+                    <a href="{% url 'registrar_presenca' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Registrar
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="px-3">Data</th>
+                                    <th>Tipo</th>
+                                    <th>Observações</th>
+                                    <th class="text-end px-3">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for presenca in presencas %}
+                                <tr>
+                                    <td class="px-3">{{ presenca.data|date:"d/m/Y" }}</td>
+                                    <td>{{ presenca.get_tipo_trabalho_display }}</td>
+                                    <td>{{ presenca.observacoes|default:"-" }}</td>
+                                    <td class="text-end px-3">
+                                        <a href="{% url 'editar_presenca' presenca.id %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="post" action="{% url 'excluir_presenca' presenca.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este registro?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">Nenhum registro encontrado.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Tipo de Trabalho</th>
-                                <th>Observações</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for presenca in presencas %}
-                            <tr>
-                                <td>{{ presenca.data|date:"d/m/Y" }}</td>
-                                <td>{{ presenca.get_tipo_trabalho_display }}</td>
-                                <td>{{ presenca.observacoes }}</td>
-                                <td>
-                                    <a href="{% url 'editar_presenca' presenca.id %}" class="btn btn-sm btn-warning">Editar</a>
-                                    <form method="post" action="{% url 'excluir_presenca' presenca.id %}" style="display: inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta presença?')">
-                                            Excluir
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center">Nenhuma presença registrada.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        </div>
+
+        <!-- Controle de dias de Folgas -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Controle de dias de Folgas</h5>
+                    <a href="{% url 'gerenciar_folgas' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Registrar
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="px-3">Data</th>
+                                    <th>Tipo</th>
+                                    <th>Observações</th>
+                                    <th class="text-end px-3">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for folga in folgas %}
+                                <tr>
+                                    <td class="px-3">{{ folga.data|date:"d/m/Y" }}</td>
+                                    <td>{{ folga.get_tipo_folga_display }}</td>
+                                    <td>{{ folga.observacoes|default:"-" }}</td>
+                                    <td class="text-end px-3">
+                                        <a href="{% url 'editar_folga' folga.id %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="post" action="{% url 'excluir_folga' folga.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este registro?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">Nenhum registro encontrado.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Feriados do Mês</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Descrição</th>
-                                <th>Tipo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for feriado in feriados %}
-                            <tr>
-                                <td>{{ feriado.data|date:"d/m/Y" }}</td>
-                                <td>{{ feriado.descricao }}</td>
-                                <td>{{ feriado.get_tipo_display }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center">Nenhum feriado este mês.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+    <!-- Feriados do Mês -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Feriados do Mês</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-3">Data</th>
+                            <th>Descrição</th>
+                            <th class="px-3">Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for feriado in feriados %}
+                        <tr>
+                            <td class="px-3">{{ feriado.data|date:"d/m/Y" }}</td>
+                            <td>{{ feriado.descricao }}</td>
+                            <td class="px-3">{{ feriado.get_tipo_display }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3">Nenhum feriado este mês.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

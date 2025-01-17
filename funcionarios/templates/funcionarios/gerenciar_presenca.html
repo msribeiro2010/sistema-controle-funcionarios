@@ -1,77 +1,71 @@
 {% extends 'base.html' %}
 
-{% block title %}Gerenciar Presença{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: none;
+    }
+    
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,.075);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
-<script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
-
 <div class="container mt-4">
-    <h2>Gerenciar Presencial/Remoto</h2>
-    <form method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-            <label for="tipo_trabalho" class="form-label">Tipo de Trabalho</label>
-            <select class="form-select" id="tipo_trabalho" name="tipo_trabalho" required>
-                <option value="PRESENCIAL">Presencial</option>
-                <option value="TELETRABALHO">Teletrabalho</option>
-            </select>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Gerenciar Presenças</h5>
+            <a href="{% url 'registrar_presenca' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Nova Presença
+            </a>
         </div>
-        <div class="mb-3">
-            <label for="dias" class="form-label">Selecione os Dias</label>
-            <input type="text" class="form-control" id="dias" name="dias" placeholder="Selecione os dias" required>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-3">Data</th>
+                            <th>Tipo</th>
+                            <th>Observações</th>
+                            <th class="text-end px-3">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for presenca in presencas %}
+                        <tr>
+                            <td class="px-3">{{ presenca.data|date:"d/m/Y" }}</td>
+                            <td>{{ presenca.get_tipo_trabalho_display }}</td>
+                            <td>{{ presenca.observacoes|default:"-" }}</td>
+                            <td class="text-end px-3">
+                                <a href="{% url 'editar_presenca' presenca.id %}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post" action="{% url 'excluir_presenca' presenca.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este registro?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-3">Nenhum registro encontrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="observacoes" class="form-label">Observações</label>
-            <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Registrar Presença</button>
-    </form>
-
-    <h3 class="mt-5">Histórico de Presenças</h3>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Data</th>
-                <th>Funcionário</th>
-                <th>Tipo de Trabalho</th>
-                <th>Observações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for presenca in presencas %}
-            <tr>
-                <td>{{ presenca.data|date:"d/m/Y" }}</td>
-                <td>{{ presenca.funcionario.nome }}</td>
-                <td>{{ presenca.get_tipo_trabalho_display }}</td>
-                <td>{{ presenca.observacoes }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const input = document.getElementById('dias');
-        const picker = new Pikaday({
-            field: input,
-            format: 'YYYY-MM-DD',
-            multiple: true,
-            toString(date, format) {
-                const day = date.getDate();
-                const month = date.getMonth() + 1;
-                const year = date.getFullYear();
-                return `${year}-${month}-${day}`;
-            },
-            parse(dateString, format) {
-                const parts = dateString.split('-');
-                const day = parseInt(parts[2], 10);
-                const month = parseInt(parts[1], 10) - 1;
-                const year = parseInt(parts[0], 10);
-                return new Date(year, month, day);
-            }
-        });
-    });
-</script>
 {% endblock %} 

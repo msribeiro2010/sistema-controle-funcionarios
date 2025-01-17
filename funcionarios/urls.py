@@ -17,4 +17,9 @@ urlpatterns = [
     path('presenca/editar/<int:presenca_id>/', editar_presenca, name='editar_presenca'),
     path('presenca/excluir/<int:presenca_id>/', excluir_presenca, name='excluir_presenca'),
     path('gerenciar-folgas/', gerenciar_folgas, name='gerenciar_folgas'),
+    path('presenca/registrar/', views.registrar_presenca, name='registrar_presenca'),
+    path('folga/editar/<int:folga_id>/', views.editar_folga, name='editar_folga'),
+    path('folga/excluir/<int:folga_id>/', views.excluir_folga, name='excluir_folga'),
+    path('ferias/registrar/', views.registrar_ferias_funcionario, name='registrar_ferias'),
+    path('ferias/excluir/<int:ferias_id>/', views.excluir_ferias, name='excluir_ferias'),
 ]

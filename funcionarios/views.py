@@ -9,6 +9,8 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.exceptions import PermissionDenied
 import calendar
 from django.http import JsonResponse
+from django.contrib import messages
+from django.core.exceptions import ValidationError
 
 def logout_view(request):
     logout(request)
@@ -87,6 +89,9 @@ def admin_dashboard(request):
         data__month=hoje.month
     ).count()
     
+    # Filtrar apenas feriados futuros ou do dia atual
+    feriados = Feriado.objects.filter(data__gte=date.today()).order_by('data')
+    
     context = {
         'funcionarios': funcionarios,
         'ferias_atuais': ferias_atuais,
@@ -96,6 +101,8 @@ def admin_dashboard(request):
         'total_funcionarios': total_funcionarios,
         'funcionarios_em_ferias': funcionarios_em_ferias,
         'total_plantoes_mes': total_plantoes_mes,
+        'feriados': feriados,
+        'hoje': date.today(),
     }
     return render(request, 'funcionarios/admin_dashboard.html', context)
 
@@ -159,29 +166,43 @@ def registrar_plantao_funcionario(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        data = datetime.strptime(request.POST['data'], '%Y-%m-%d').date()
-        tipo = request.POST['tipo']
-        observacoes = request.POST.get('observacoes', '')
+        try:
+            data = datetime.strptime(request.POST['data'], '%Y-%m-%d').date()
+            observacoes = request.POST.get('observacoes', '')
+            
+            # Determinar o tipo de plantão baseado no dia da semana
+            dia_semana = data.weekday()
+            if dia_semana == 5:  # Sábado
+                tipo = 'sabado'
+            elif dia_semana == 6:  # Domingo
+                tipo = 'domingo'
+            else:
+                if Feriado.objects.filter(data=data).exists():
+                    tipo = 'feriado'
+                else:
+                    messages.error(request, 'Data selecionada não é um fim de semana ou feriado.')
+                    return redirect('registrar_plantao_funcionario')
 
-        # Verificar se já existe plantão na data
-        plantao_existente = Plantao.objects.filter(
-            funcionario=funcionario,
-            data=data
-        )
-
-        if plantao_existente.exists():
-            messages.error(request, 'Você já possui plantão registrado nesta data.')
+            try:
+                plantao = Plantao(
+                    funcionario=funcionario,
+                    data=data,
+                    tipo=tipo,
+                    observacoes=observacoes
+                )
+                plantao.full_clean()
+                plantao.save()
+                messages.success(request, 'Plantão registrado com sucesso!')
+                return redirect('dashboard')
+            except ValidationError as e:
+                for field, errors in e.message_dict.items():
+                    for error in errors:
+                        messages.error(request, f'{error}')
+                return redirect('registrar_plantao_funcionario')
+                
+        except ValueError:
+            messages.error(request, 'Formato de data inválido.')
             return redirect('registrar_plantao_funcionario')
-
-        Plantao.objects.create(
-            funcionario=funcionario,
-            data=data,
-            tipo=tipo,
-            observacoes=observacoes
-        )
-
-        messages.success(request, 'Plantão registrado com sucesso!')
-        return redirect('dashboard')
 
     return render(request, 'funcionarios/registrar_plantao.html', {'funcionario': funcionario})
 
@@ -240,6 +261,15 @@ def feriados(request):
 def servidor_dashboard(request):
     funcionario = get_object_or_404(Funcionario, usuario=request.user)
     hoje = date.today()
+    primeiro_dia_mes = hoje.replace(day=1)
+    
+    # Buscar presenças
+    presencas = Presenca.objects.filter(funcionario=funcionario)
+    presencas_mes = presencas.filter(data__gte=primeiro_dia_mes)
+    
+    # Buscar folgas
+    folgas = Folga.objects.filter(funcionario=funcionario)
+    folgas_mes = folgas.filter(data__gte=primeiro_dia_mes)
     
     # Buscar férias do funcionário
     ferias = Ferias.objects.filter(
@@ -248,11 +278,6 @@ def servidor_dashboard(request):
     
     # Buscar plantões do funcionário
     plantoes = Plantao.objects.filter(
-        funcionario=funcionario
-    ).order_by('-data')
-    
-    # Buscar presenças do funcionário
-    presencas = Presenca.objects.filter(
         funcionario=funcionario
     ).order_by('-data')
     
@@ -281,6 +306,9 @@ def servidor_dashboard(request):
         'ferias': ferias,
         'plantoes': plantoes,
         'presencas': presencas,
+        'presencas_mes': presencas_mes,
+        'folgas': folgas,
+        'folgas_mes': folgas_mes,
         'feriados': feriados,
         'ferias_com_conflito': ferias_com_conflito,
         'dias_ferias_disponiveis': funcionario.dias_ferias_disponiveis,
@@ -384,9 +412,23 @@ def editar_plantao(request, plantao_id):
         tipo = request.POST.get('tipo')
         observacoes = request.POST.get('observacoes', '')
         
-        if data and tipo:
-            plantao.data = datetime.strptime(data, '%Y-%m-%d').date()
-            plantao.tipo = tipo
+        if data:
+            try:
+                data = datetime.strptime(data, '%d/%m/%Y').date()  # Try 'dd/mm/yyyy' format
+            except ValueError:
+                data = datetime.strptime(data, '%Y-%m-%d').date()  # Fallback to 'yyyy-mm-dd' format
+            dias_da_semana = {
+                'Monday': 'Segunda-feira',
+                'Tuesday': 'Terça-feira',
+                'Wednesday': 'Quarta-feira',
+                'Thursday': 'Quinta-feira',
+                'Friday': 'Sexta-feira',
+                'Saturday': 'Sábado',
+                'Sunday': 'Domingo'
+            }
+            tipo = dias_da_semana[data.strftime('%A')]  # Translate to Portuguese
+            plantao.data = data
+            plantao.tipo = tipo  # Set the 'Tipo' field
             plantao.observacoes = observacoes
             plantao.save()
             messages.success(request, 'Plantão atualizado com sucesso!')
@@ -450,3 +492,98 @@ def gerenciar_folgas(request):
 
     folgas = Folga.objects.filter(funcionario=funcionario).order_by('-data')
     return render(request, 'funcionarios/gerenciar_folgas.html', {'folgas': folgas})
+
+def painel_funcionario(request):
+    # ... código existente ...
+    
+    # Filtrar apenas feriados futuros ou do dia atual
+    feriados = Feriado.objects.filter(data__gte=date.today()).order_by('data')
+    
+    context = {
+        # ... outros dados do context ...
+        'feriados': feriados,
+        'hoje': date.today(),
+    }
+    
+    return render(request, 'funcionarios/painel.html', context)
+
+@login_required
+def registrar_presenca(request):
+    try:
+        funcionario = Funcionario.objects.get(usuario=request.user)
+    except Funcionario.DoesNotExist:
+        messages.error(request, 'Funcionário não encontrado.')
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        try:
+            data = datetime.strptime(request.POST['data'], '%Y-%m-%d').date()
+            tipo_trabalho = request.POST.get('tipo_trabalho')
+            observacoes = request.POST.get('observacoes', '')
+
+            presenca = Presenca(
+                funcionario=funcionario,
+                data=data,
+                tipo_trabalho=tipo_trabalho,
+                observacoes=observacoes
+            )
+            presenca.full_clean()
+            presenca.save()
+            messages.success(request, 'Presença registrada com sucesso!')
+            return redirect('historico_presencas')
+        except ValidationError as e:
+            for field, errors in e.message_dict.items():
+                for error in errors:
+                    messages.error(request, f'{error}')
+            return redirect('registrar_presenca')
+
+    return render(request, 'funcionarios/registrar_presenca.html', {'funcionario': funcionario})
+
+@login_required
+def editar_folga(request, folga_id):
+    folga = get_object_or_404(Folga, id=folga_id, funcionario__usuario=request.user)
+    
+    if request.method == 'POST':
+        data = request.POST.get('data')
+        tipo_folga = request.POST.get('tipo_folga')
+        observacoes = request.POST.get('observacoes', '')
+        
+        if data and tipo_folga:
+            folga.data = datetime.strptime(data, '%Y-%m-%d').date()
+            folga.tipo_folga = tipo_folga
+            folga.observacoes = observacoes
+            folga.save()
+            messages.success(request, 'Folga atualizada com sucesso!')
+            return redirect('servidor_dashboard')
+
+    return render(request, 'funcionarios/editar_folga.html', {'folga': folga})
+
+@login_required
+def excluir_folga(request, folga_id):
+    folga = get_object_or_404(Folga, id=folga_id, funcionario__usuario=request.user)
+    
+    if request.method == 'POST':
+        folga.delete()
+        messages.success(request, 'Folga excluída com sucesso!')
+    
+    return redirect('servidor_dashboard')
+
+@login_required
+def excluir_ferias(request, ferias_id):
+    ferias = get_object_or_404(Ferias, id=ferias_id, funcionario__usuario=request.user)
+    
+    if request.method == 'POST':
+        # Verifica se as férias estão no status AGENDADO
+        if ferias.status == 'AGENDADO':
+            # Restaura os dias de férias disponíveis
+            funcionario = ferias.funcionario
+            funcionario.dias_ferias_disponiveis += ferias.dias_utilizados
+            funcionario.save()
+            
+            # Exclui o registro de férias
+            ferias.delete()
+            messages.success(request, 'Férias excluídas com sucesso!')
+        else:
+            messages.error(request, 'Só é possível excluir férias com status AGENDADO.')
+    
+    return redirect('servidor_dashboard')

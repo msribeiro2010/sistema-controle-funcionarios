@@ -20,56 +20,40 @@ class Funcionario(models.Model):
         return f"{self.nome} ({self.matricula})"
 
 class Feriado(models.Model):
-    data = models.DateField('Data')
-    descricao = models.CharField('Descrição', max_length=100)
-    tipo = models.CharField('Tipo', max_length=20, choices=[
+    TIPO_CHOICES = (
         ('NACIONAL', 'Nacional'),
         ('ESTADUAL', 'Estadual'),
         ('MUNICIPAL', 'Municipal'),
-        ('FACULTATIVO', 'Facultativo'),
-        ('RECESSO', 'Recesso')
-    ])
-    recorrente = models.BooleanField('Recorrente', default=True, help_text='Se marcado, o feriado se repete todos os anos')
+    )
+    
+    data = models.DateField()
+    descricao = models.CharField('Descrição', max_length=255)
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_CHOICES,
+        default='NACIONAL'
+    )
+    recorrente = models.BooleanField(
+        'Feriado Recorrente',
+        default=False,
+        help_text='Marque se este feriado se repete todos os anos'
+    )
 
     class Meta:
         verbose_name = 'Feriado'
         verbose_name_plural = 'Feriados'
         ordering = ['data']
-        unique_together = ['data', 'tipo']
 
     def __str__(self):
-        return f"{self.descricao} ({self.data.strftime('%d/%m/%Y')})"
+        return f"{self.descricao} - {self.data.strftime('%d/%m/%Y')}"
 
-    @staticmethod
-    def is_dia_util(data):
-        """Verifica se uma data é dia útil (não é fim de semana nem feriado)"""
-        # Verifica se é fim de semana
-        if data.weekday() >= 5:  # 5 = Sábado, 6 = Domingo
-            return False
-        
-        # Verifica se é feriado
-        feriados = Feriado.objects.filter(data=data)
-        if feriados.exists():
-            return False
-        
-        # Verifica feriados recorrentes (mesma data em qualquer ano)
-        feriados_recorrentes = Feriado.objects.filter(
-            data__month=data.month,
-            data__day=data.day,
-            recorrente=True
-        )
-        if feriados_recorrentes.exists():
-            return False
-        
-        return True
-
-    @staticmethod
-    def proximo_dia_util(data):
-        """Retorna o próximo dia útil após a data fornecida"""
-        proximo_dia = data
-        while not Feriado.is_dia_util(proximo_dia):
-            proximo_dia += timedelta(days=1)
-        return proximo_dia
+    @property
+    def ja_passou(self):
+        hoje = date.today()
+        if self.recorrente:
+            feriado_este_ano = date(hoje.year, self.data.month, self.data.day)
+            return feriado_este_ano < hoje
+        return self.data < hoje
 
 class Ferias(models.Model):
     STATUS_CHOICES = [
@@ -213,15 +197,30 @@ class Plantao(models.Model):
     folgas_utilizadas = models.IntegerField('Folgas Utilizadas', default=0)
     folgas_restantes = models.IntegerField('Folgas Restantes', default=0)
 
+    def clean(self):
+        super().clean()
+        if self.data:
+            # Verifica se já existe plantão nesta data
+            plantao_existente = Plantao.objects.filter(data=self.data)
+            if self.pk:  # Se está editando um plantão existente
+                plantao_existente = plantao_existente.exclude(pk=self.pk)
+            
+            if plantao_existente.exists():
+                funcionarios_com_plantao = ", ".join([p.funcionario.nome for p in plantao_existente])
+                raise ValidationError({
+                    'data': f'Já existe(m) plantão(ões) registrado(s) nesta data para o(s) funcionário(s): {funcionarios_com_plantao}'
+                })
+
     def save(self, *args, **kwargs):
+        self.clean()  # Garante que a validação seja executada
         # Define o número de folgas com base no tipo de plantão
         if not self.pk:  # Apenas na criação
             if self.tipo == 'sabado' or self.tipo == 'domingo':
-                self.folgas_geradas = 1  # 1 folga para plantão de sábado ou domingo
+                self.folgas_geradas = 1
             elif self.tipo == 'fds':
-                self.folgas_geradas = 2  # 2 folgas para plantão de fim de semana completo
+                self.folgas_geradas = 2
             else:
-                self.folgas_geradas = 1  # 1 folga para plantão em feriado
+                self.folgas_geradas = 1
             self.folgas_restantes = self.folgas_geradas
         
         # Sempre atualiza folgas restantes
@@ -292,17 +291,22 @@ class Presenca(models.Model):
     tipo_trabalho = models.CharField('Tipo de Trabalho', max_length=20, choices=[('PRESENCIAL', 'Presencial'), ('TELETRABALHO', 'Teletrabalho')], default='PRESENCIAL')
 
     class Meta:
-        verbose_name = 'Presença'
-        verbose_name_plural = 'Presenças'
+        verbose_name = 'Presencial'
+        verbose_name_plural = 'Presencial'
         ordering = ['-data']
 
     def __str__(self):
-        return f"Presença de {self.funcionario.nome} em {self.data}"
+        return f"Presencial de {self.funcionario.nome} em {self.data}"
 
 class Folga(models.Model):
+    TIPO_CHOICES = [
+        ('COMPENSATORIA', 'Compensatória'),
+        ('LICENCA', 'Licença'),
+    ]
+    
     funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, verbose_name='Funcionário')
     data = models.DateField('Data')
-    tipo_folga = models.CharField('Tipo de Folga', max_length=20, choices=[('COMPENSATÓRIA', 'Compensatória'), ('LICENÇA', 'Licença')], default='COMPENSATÓRIA')
+    tipo_folga = models.CharField('Tipo de Folga', max_length=20, choices=TIPO_CHOICES, default='COMPENSATORIA')
     observacoes = models.TextField('Observações', blank=True, null=True)
 
     class Meta:

@@ -4,27 +4,28 @@
 <div class="container mt-4">
     <div class="card">
         <div class="card-header">
-            <h5 class="mb-0">Registrar Folga</h5>
+            <h5 class="mb-0">Editar Folga</h5>
         </div>
         <div class="card-body">
             <form method="post">
                 {% csrf_token %}
                 <div class="mb-3">
                     <label for="data" class="form-label">Data</label>
-                    <input type="date" class="form-control" id="data" name="data" required>
+                    <input type="date" class="form-control" id="data" name="data" 
+                           value="{{ folga.data|date:'Y-m-d' }}" required>
                 </div>
                 <div class="mb-3">
                     <label for="tipo_folga" class="form-label">Tipo de Folga</label>
                     <select class="form-control" id="tipo_folga" name="tipo_folga" required>
-                        <option value="COMPENSATORIA">Compensatória</option>
-                        <option value="LICENCA">Licença</option>
+                        <option value="COMPENSATORIA" {% if folga.tipo_folga == 'COMPENSATORIA' %}selected{% endif %}>Compensatória</option>
+                        <option value="LICENCA" {% if folga.tipo_folga == 'LICENCA' %}selected{% endif %}>Licença</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <label for="observacoes" class="form-label">Observações</label>
-                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
+                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3">{{ folga.observacoes }}</textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Registrar Folga</button>
+                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                 <a href="{% url 'servidor_dashboard' %}" class="btn btn-secondary">Voltar</a>
             </form>
         </div>
