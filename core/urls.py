@@ -21,7 +21,7 @@ from funcionarios.views import (
     dashboard, admin_dashboard, registrar_ferias_funcionario,
     registrar_plantao_funcionario, calendario, feriados,
     servidor_dashboard, cancelar_ferias, verificar_conflitos,
-    escolha_acao
+    escolha_acao, gerenciar_presenca
 )
 
 urlpatterns = [
@@ -38,5 +38,6 @@ urlpatterns = [
     path('feriados/', feriados, name='feriados'),
     path('api/verificar-conflitos/', verificar_conflitos, name='verificar_conflitos'),
     path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
+    path('gerenciar-presenca/', gerenciar_presenca, name='gerenciar_presenca'),
     path('funcionarios/', include('funcionarios.urls')),
 ]
