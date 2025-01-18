@@ -3,7 +3,7 @@ services:
     name: sistema-controle-funcionarios
     env: python
     buildCommand: bash build.sh
-    startCommand: /opt/render/project/src/.venv/bin/python -m waitress-serve --port=$PORT core.wsgi:application
+    startCommand: daphne -b 0.0.0.0 -p $PORT core.wsgi:application
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0

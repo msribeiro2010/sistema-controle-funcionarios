@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -o errexit
 
-# Criar ambiente virtual
-python -m venv .venv
-source .venv/bin/activate
-
 # Instalar dependências
 python -m pip install --upgrade pip
 pip install -r requirements.txt
@@ -20,6 +16,6 @@ python manage.py migrate --noinput
 
 # Verificar instalação
 echo "Python path: $(which python)"
-echo "Waitress path: $(which waitress-serve)"
+echo "Daphne path: $(which daphne)"
 
 echo "Build completed successfully!" 

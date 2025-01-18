@@ -133,3 +133,7 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+# Adicione estas configurações
+ASGI_APPLICATION = 'core.asgi.application'
+WSGI_APPLICATION = 'core.wsgi.application'
