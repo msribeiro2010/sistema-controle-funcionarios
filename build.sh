@@ -25,9 +25,6 @@ export PYTHONPATH=/opt/render/project/src:$PYTHONPATH
 python -c "import core.wsgi; print('WSGI module found')"
 python -c "import core.asgi; print('ASGI module found')"
 
-# Testar daphne
-daphne --version
-
 # Coletar arquivos estáticos
 python manage.py collectstatic --noinput
 
