@@ -1,12 +1,17 @@
 from django.urls import path
 from . import views
-from .views import CustomLoginView, gerenciar_presenca, editar_ferias, editar_plantao, excluir_plantao, editar_presenca, excluir_presenca, gerenciar_folgas
+from .views import (
+    gerenciar_presenca, editar_ferias, editar_plantao, 
+    excluir_plantao, editar_presenca, excluir_presenca, 
+    gerenciar_folgas, servidor_dashboard
+)
 
 app_name = 'funcionarios'
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('servidor-dashboard/', servidor_dashboard, name='servidor_dashboard'),
     path('calendario/', views.calendario, name='calendario'),
     path('registrar-ferias/', views.registrar_ferias_funcionario, name='registrar_ferias'),
     path('registrar-plantao/', views.registrar_plantao_funcionario, name='registrar_plantao'),
