@@ -24,5 +24,6 @@ def redirect_to_login(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', redirect_to_login, name='home'),
+    path('login/', redirect_to_login),
     path('funcionarios/', include('funcionarios.urls')),
 ]
