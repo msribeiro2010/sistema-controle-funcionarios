@@ -113,11 +113,31 @@ LOGOUT_REDIRECT_URL = '/login/'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# Configurações de segurança
+# Configurações de segurança - DESATIVE temporariamente para debug
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 SECURE_BROWSER_XSS_FILTER = False
+
+# Configurações de autenticação
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Configurações de sessão
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # 2 semanas
+SESSION_COOKIE_SECURE = False  # Temporariamente False para debug
+CSRF_COOKIE_SECURE = False    # Temporariamente False para debug
+
+# Configurações de CSRF
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.render.com',
+    'https://sistema-controle-funcionarios.onrender.com'
+]
+
+# Debug temporário
+DEBUG = True  # Temporariamente True para ver erros
 
 # Configuração de logging
 LOGGING = {

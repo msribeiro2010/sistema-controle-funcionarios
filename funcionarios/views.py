@@ -11,6 +11,8 @@ import calendar
 from django.http import JsonResponse
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.contrib.auth.views import LoginView
+from django.urls import reverse_lazy
 
 def logout_view(request):
     logout(request)
@@ -586,3 +588,18 @@ def excluir_ferias(request, ferias_id):
             messages.error(request, 'Só é possível excluir férias com status AGENDADO.')
     
     return redirect('servidor_dashboard')
+
+class CustomLoginView(LoginView):
+    template_name = 'funcionarios/login.html'
+    success_url = reverse_lazy('funcionarios:painel')
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url:
+            return next_url
+        return self.success_url
+
+    def form_invalid(self, form):
+        print(f"Login error: {form.errors}")  # Debug
+        return super().form_invalid(form)
