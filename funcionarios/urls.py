@@ -1,16 +1,16 @@
 from django.urls import path
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LogoutView
 from . import views
 from .views import (
     gerenciar_presenca, editar_ferias, editar_plantao, 
     excluir_plantao, editar_presenca, excluir_presenca, 
-    gerenciar_folgas, servidor_dashboard
+    gerenciar_folgas, servidor_dashboard, CustomLoginView
 )
 
 app_name = 'funcionarios'
 
 urlpatterns = [
-    path('login/', LoginView.as_view(template_name='funcionarios/login.html'), name='login'),
+    path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(next_page='funcionarios:login'), name='logout'),
     path('', views.dashboard, name='dashboard'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
@@ -31,4 +31,5 @@ urlpatterns = [
     path('folga/excluir/<int:folga_id>/', views.excluir_folga, name='excluir_folga'),
     path('ferias/registrar/', views.registrar_ferias_funcionario, name='registrar_ferias'),
     path('ferias/excluir/<int:ferias_id>/', views.excluir_ferias, name='excluir_ferias'),
+    path('escolha-acao/', views.escolha_acao, name='escolha_acao'),
 ]

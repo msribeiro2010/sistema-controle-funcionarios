@@ -43,9 +43,10 @@ def verificar_conflito_ferias(data_inicio, data_fim, cargo, funcionario_atual=No
 @ensure_csrf_cookie
 @login_required
 def dashboard(request):
+    print("Dashboard view called")  # Debug print
     if request.user.is_superuser:
-        return redirect('admin_dashboard')
-    return redirect('escolha_acao')
+        return redirect('funcionarios:admin_dashboard')
+    return redirect('funcionarios:escolha_acao')
 
 @user_passes_test(is_admin)
 def admin_dashboard(request):
@@ -358,18 +359,14 @@ def verificar_conflitos(request):
 @login_required
 def escolha_acao(request):
     try:
-        funcionario = Funcionario.objects.select_related('usuario').get(usuario=request.user)
+        funcionario = Funcionario.objects.get(usuario=request.user)
+        return render(request, 'funcionarios/escolha_acao.html', {
+            'funcionario': funcionario,
+            'total_plantoes': Plantao.objects.filter(funcionario=funcionario).count()
+        })
     except Funcionario.DoesNotExist:
-        messages.warning(request, 'Por favor, crie um registro de Funcionário no painel administrativo primeiro.')
-        return redirect('admin:funcionarios_funcionario_add')
-
-    total_plantoes = Plantao.objects.filter(funcionario=funcionario).count()
-    
-    context = {
-        'funcionario': funcionario,
-        'total_plantoes': total_plantoes,
-    }
-    return render(request, 'funcionarios/escolha_acao.html', context)
+        messages.error(request, 'Funcionário não encontrado.')
+        return redirect('funcionarios:login')
 
 @login_required
 def gerenciar_presenca(request):
@@ -594,17 +591,17 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        next_url = self.request.GET.get('next')
-        if next_url:
-            return next_url
-        return reverse_lazy('funcionarios:dashboard')
+        print("Login successful, redirecting...")  # Debug print
+        return reverse_lazy('funcionarios:escolha_acao')
+
+    def form_valid(self, form):
+        print("Form is valid")  # Debug print
+        response = super().form_valid(form)
+        print(f"Redirecting to: {self.get_success_url()}")  # Debug print
+        return response
 
     def form_invalid(self, form):
+        print(f"Form errors: {form.errors}")  # Debug print
         for error in form.errors.values():
             self.request.session['login_error'] = error[0]
         return super().form_invalid(form)
-
-    def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect('funcionarios:dashboard')
-        return super().get(request, *args, **kwargs)

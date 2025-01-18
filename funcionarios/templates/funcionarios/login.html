@@ -20,10 +20,9 @@
                             {{ request.session.login_error }}
                         </div>
                     {% endif %}
-                    <form method="post" action="/funcionarios/login/">
+                    <form method="post">
                         {% csrf_token %}
                         {{ form|crispy }}
-                        <input type="hidden" name="next" value="{{ request.GET.next }}">
                         <div class="d-grid gap-2 mt-3">
                             <button type="submit" class="btn btn-primary">Entrar</button>
                         </div>
