@@ -85,7 +85,7 @@
                                 <i class="fas fa-calendar-check"></i>
                                 Dias disponíveis: {{ funcionario.dias_ferias_disponiveis }}
                             </div>
-                            <a href="{% url 'registrar_ferias_funcionario' %}" class="btn btn-primary w-100">
+                            <a href="{% url 'funcionarios:registrar_ferias' %}" class="btn btn-primary w-100">
                                 <i class="fas fa-plus me-2"></i>Solicitar Férias
                             </a>
                         </div>
@@ -106,7 +106,7 @@
                                 <i class="fas fa-clipboard-list"></i>
                                 Total de plantões: {{ total_plantoes }}
                             </div>
-                            <a href="{% url 'registrar_plantao_funcionario' %}" class="btn btn-primary w-100">
+                            <a href="{% url 'funcionarios:registrar_plantao' %}" class="btn btn-primary w-100">
                                 <i class="fas fa-plus me-2"></i>Registrar Plantão
                             </a>
                         </div>
@@ -140,7 +140,7 @@
                             <p class="card-text text-center">
                                 Registre e acompanhe suas folgas compensatórias e licenças.
                             </p>
-                            <a href="{% url 'gerenciar_folgas' %}" class="btn btn-primary w-100">
+                            <a href="{% url 'funcionarios:gerenciar_folgas' %}" class="btn btn-primary w-100">
                                 <i class="fas fa-calendar-plus me-2"></i>Gerenciar Folgas
                             </a>
                         </div>
@@ -149,7 +149,7 @@
             </div>
 
             <div class="text-center mt-4">
-                <a href="{% url 'servidor_dashboard' %}" class="btn btn-lg btn-outline-primary">
+                <a href="{% url 'funcionarios:servidor_dashboard' %}" class="btn btn-lg btn-outline-primary">
                     <i class="fas fa-columns me-2"></i>Ver Meu Painel Completo
                 </a>
             </div>
