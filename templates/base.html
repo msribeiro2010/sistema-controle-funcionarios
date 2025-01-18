@@ -32,7 +32,7 @@
                 {% if user.is_authenticated %}
                 <div class="navbar-nav">
                     <span class="nav-item nav-link text-light">Olá, {{ user.first_name|default:user.username }}</span>
-                    <a class="nav-link" href="{% url 'logout' %}">Sair</a>
+                    <a href="{% url 'funcionarios:logout' %}" class="nav-link">Logout</a>
                 </div>
                 {% endif %}
             </div>
