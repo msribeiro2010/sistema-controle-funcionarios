@@ -12,14 +12,23 @@ pip install -r requirements.txt
 # Criar diretório de arquivos estáticos
 mkdir -p staticfiles
 
+# Verificar estrutura do projeto
+echo "Current directory: $(pwd)"
+echo "Directory contents: $(ls -la)"
+echo "Python path: $(which python)"
+echo "Daphne path: $(which daphne)"
+
+# Configurar PYTHONPATH
+export PYTHONPATH=/opt/render/project/src:$PYTHONPATH
+
+# Testar importação
+python -c "import core.wsgi; print('WSGI module found')"
+python -c "import core.asgi; print('ASGI module found')"
+
 # Coletar arquivos estáticos
 python manage.py collectstatic --noinput
 
 # Executar migrações
 python manage.py migrate --noinput
-
-# Verificar instalação
-echo "Python path: $(which python)"
-echo "Daphne path: $(which daphne)"
 
 echo "Build completed successfully!" 

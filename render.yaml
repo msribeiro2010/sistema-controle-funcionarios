@@ -3,7 +3,7 @@ services:
     name: sistema-controle-funcionarios
     env: python
     buildCommand: bash build.sh
-    startCommand: /opt/render/project/src/.venv/bin/daphne -b 0.0.0.0 -p $PORT core.asgi:application
+    startCommand: cd /opt/render/project/src && /opt/render/project/src/.venv/bin/daphne -b 0.0.0.0 -p $PORT core.asgi:application
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
@@ -14,4 +14,6 @@ services:
       - key: PORT
         value: 8000
       - key: PYTHONPATH
-        value: /opt/render/project/src 
+        value: /opt/render/project/src
+      - key: DJANGO_SETTINGS_MODULE
+        value: core.settings 
