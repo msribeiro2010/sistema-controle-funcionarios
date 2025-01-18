@@ -18,7 +18,8 @@ python manage.py collectstatic --noinput
 # Executar migrações
 python manage.py migrate --noinput
 
-# Dar permissão ao script de inicialização
-chmod +x start.sh
+# Verificar instalação
+echo "Python path: $(which python)"
+echo "Waitress path: $(which waitress-serve)"
 
 echo "Build completed successfully!" 
