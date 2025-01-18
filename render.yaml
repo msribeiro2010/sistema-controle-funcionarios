@@ -3,7 +3,7 @@ services:
     name: sistema-controle-funcionarios
     env: python
     buildCommand: bash build.sh
-    startCommand: python -m waitress-serve --port=$PORT core.wsgi:application
+    startCommand: bash start.sh
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
