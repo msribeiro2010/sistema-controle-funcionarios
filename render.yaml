@@ -3,7 +3,7 @@ services:
     name: sistema-controle-funcionarios
     env: python
     buildCommand: bash build.sh
-    startCommand: bash start.sh
+    startCommand: /opt/render/project/src/.venv/bin/daphne -b 0.0.0.0 -p $PORT core.asgi:application
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
