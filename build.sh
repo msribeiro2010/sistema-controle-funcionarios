@@ -21,4 +21,9 @@ python manage.py migrate --noinput
 # Dar permissão ao script de inicialização
 chmod +x run.sh
 
+# Verificar caminhos
+echo "Python path: $(which python)"
+echo "Gunicorn path: $(which gunicorn)"
+echo "Current directory: $(pwd)"
+
 echo "Build completed successfully!" 

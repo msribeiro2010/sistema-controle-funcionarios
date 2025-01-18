@@ -3,7 +3,7 @@ services:
     name: sistema-controle-funcionarios
     env: python
     buildCommand: bash build.sh
-    startCommand: bash run.sh
+    startCommand: /bin/bash run.sh
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
