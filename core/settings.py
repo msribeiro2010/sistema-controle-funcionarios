@@ -105,9 +105,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login URLs
-LOGIN_URL = '/funcionarios/login/'
-LOGIN_REDIRECT_URL = '/funcionarios/'
-LOGOUT_REDIRECT_URL = '/funcionarios/login/'
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 # Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -129,6 +129,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 1209600  # 2 semanas
 SESSION_COOKIE_SECURE = False  # Temporariamente False para debug
 CSRF_COOKIE_SECURE = False    # Temporariamente False para debug
+SESSION_SAVE_EVERY_REQUEST = True
 
 # Configurações de CSRF
 CSRF_TRUSTED_ORIGINS = [
@@ -170,7 +171,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 # Configurações de autenticação
 LOGIN_URL = '/funcionarios/login/'
-LOGIN_REDIRECT_URL = '/funcionarios/'
+LOGIN_REDIRECT_URL = '/funcionarios/escolha-acao/'
 LOGOUT_REDIRECT_URL = '/funcionarios/login/'
 
 # Configurações de segurança para produção

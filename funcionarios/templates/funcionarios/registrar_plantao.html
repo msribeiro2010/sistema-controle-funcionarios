@@ -1,6 +1,9 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <style>
     .card {
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
@@ -23,58 +26,47 @@
                     <h5 class="mb-0">Registrar Plantão</h5>
                 </div>
                 <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
                     <form method="post">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label for="data" class="form-label">Data</label>
+                            <label for="data" class="form-label">Data do Plantão</label>
                             <input type="date" class="form-control" id="data" name="data" required>
                         </div>
+                        
                         <div class="mb-3">
                             <label for="observacoes" class="form-label">Observações</label>
                             <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
                         </div>
-                        <div class="d-flex justify-content-between">
-                            <button type="submit" class="btn btn-primary">Registrar Plantão</button>
-                            <a href="{% url 'servidor_dashboard' %}" class="btn btn-secondary">Voltar</a>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Registrar Plantão
+                            </button>
+                            <a href="{% url 'funcionarios:servidor_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Voltar
+                            </a>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-<<<<<<< HEAD
     </div>
 </div>
-=======
-        <div class="mb-3">
-            <label for="observacoes" class="form-label">Observações</label>
-            <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Registrar Plantão</button>
-    </form>
-</div>
 
+{% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const dataInput = document.getElementById('data');
-        const tipoSelect = document.getElementById('tipo');
-
-        dataInput.addEventListener('change', function() {
-            const date = new Date(this.value);
-            const day = date.getDay();
-            const daysOfWeek = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-            let tipo = daysOfWeek[day];
-
-            // Verificar se é feriado
-            fetch(`/api/verificar-feriado/?data=${this.value}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.feriado) {
-                        tipo += ' (feriado)';
-                    }
-                    tipoSelect.value = tipo.toLowerCase();
-                });
-        });
-    });
+    // Impede a seleção de datas passadas
+    var today = new Date().toISOString().split('T')[0];
+    document.getElementById('data').setAttribute('min', today);
 </script>
->>>>>>> f20754eaa2ae8dddd095e736f335c35dfe1230e7
+{% endblock %}
+
 {% endblock %} 

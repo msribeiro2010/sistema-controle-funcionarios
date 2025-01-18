@@ -43,10 +43,9 @@ def verificar_conflito_ferias(data_inicio, data_fim, cargo, funcionario_atual=No
 @ensure_csrf_cookie
 @login_required
 def dashboard(request):
-    print("Dashboard view called")  # Debug print
     if request.user.is_superuser:
-        return redirect('funcionarios:admin_dashboard')
-    return redirect('funcionarios:escolha_acao')
+        return redirect('admin_dashboard')
+    return redirect('escolha_acao')
 
 @user_passes_test(is_admin)
 def admin_dashboard(request):
@@ -166,7 +165,7 @@ def registrar_plantao_funcionario(request):
         funcionario = Funcionario.objects.get(usuario=request.user)
     except Funcionario.DoesNotExist:
         messages.error(request, 'Funcionário não encontrado.')
-        return redirect('dashboard')
+        return redirect('funcionarios:dashboard')
 
     if request.method == 'POST':
         try:
@@ -184,37 +183,27 @@ def registrar_plantao_funcionario(request):
                     tipo = 'feriado'
                 else:
                     messages.error(request, 'Data selecionada não é um fim de semana ou feriado.')
-                    return redirect('registrar_plantao_funcionario')
+                    return redirect('funcionarios:registrar_plantao')
 
-            try:
-                # Verificar se já existe um plantão para esta data
-                plantao_existente = Plantao.objects.filter(
-                    funcionario=funcionario,
-                    data=data
-                ).exists()
+            # Verificar se já existe um plantão para esta data
+            if Plantao.objects.filter(funcionario=funcionario, data=data).exists():
+                messages.error(request, 'Já existe um plantão registrado para esta data.')
+                return redirect('funcionarios:registrar_plantao')
 
-                if plantao_existente:
-                    messages.error(request, 'Já existe um plantão registrado para esta data.')
-                    return redirect('registrar_plantao_funcionario')
+            # Criar o plantão
+            Plantao.objects.create(
+                funcionario=funcionario,
+                data=data,
+                tipo=tipo,
+                observacoes=observacoes
+            )
 
-                # Criar o plantão
-                Plantao.objects.create(
-                    funcionario=funcionario,
-                    data=data,
-                    tipo=tipo,
-                    observacoes=observacoes
-                )
-
-                messages.success(request, 'Plantão registrado com sucesso!')
-                return redirect('servidor_dashboard')
-
-            except Exception as e:
-                messages.error(request, f'Erro ao registrar plantão: {str(e)}')
-                return redirect('registrar_plantao_funcionario')
+            messages.success(request, 'Plantão registrado com sucesso!')
+            return redirect('funcionarios:servidor_dashboard')
 
         except ValueError:
             messages.error(request, 'Data inválida.')
-            return redirect('registrar_plantao_funcionario')
+            return redirect('funcionarios:registrar_plantao')
 
     return render(request, 'funcionarios/registrar_plantao.html', {'funcionario': funcionario})
 
@@ -359,14 +348,18 @@ def verificar_conflitos(request):
 @login_required
 def escolha_acao(request):
     try:
-        funcionario = Funcionario.objects.get(usuario=request.user)
-        return render(request, 'funcionarios/escolha_acao.html', {
-            'funcionario': funcionario,
-            'total_plantoes': Plantao.objects.filter(funcionario=funcionario).count()
-        })
+        funcionario = Funcionario.objects.select_related('usuario').get(usuario=request.user)
     except Funcionario.DoesNotExist:
-        messages.error(request, 'Funcionário não encontrado.')
-        return redirect('funcionarios:login')
+        messages.warning(request, 'Por favor, crie um registro de Funcionário no painel administrativo primeiro.')
+        return redirect('admin:funcionarios_funcionario_add')
+
+    total_plantoes = Plantao.objects.filter(funcionario=funcionario).count()
+    
+    context = {
+        'funcionario': funcionario,
+        'total_plantoes': total_plantoes,
+    }
+    return render(request, 'funcionarios/escolha_acao.html', context)
 
 @login_required
 def gerenciar_presenca(request):
@@ -591,17 +584,17 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        print("Login successful, redirecting...")  # Debug print
-        return reverse_lazy('funcionarios:escolha_acao')
-
-    def form_valid(self, form):
-        print("Form is valid")  # Debug print
-        response = super().form_valid(form)
-        print(f"Redirecting to: {self.get_success_url()}")  # Debug print
-        return response
+        next_url = self.request.GET.get('next')
+        if next_url:
+            return next_url
+        return reverse_lazy('funcionarios:dashboard')
 
     def form_invalid(self, form):
-        print(f"Form errors: {form.errors}")  # Debug print
         for error in form.errors.values():
             self.request.session['login_error'] = error[0]
         return super().form_invalid(form)
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('funcionarios:dashboard')
+        return super().get(request, *args, **kwargs)

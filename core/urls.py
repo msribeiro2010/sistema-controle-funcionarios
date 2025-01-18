@@ -16,14 +16,27 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.shortcuts import redirect
-
-def redirect_to_login(request):
-    return redirect('funcionarios:login')
+from django.contrib.auth.views import LogoutView, LoginView
+from funcionarios.views import (
+    dashboard, admin_dashboard, registrar_ferias_funcionario,
+    registrar_plantao_funcionario, calendario, feriados,
+    servidor_dashboard, cancelar_ferias, verificar_conflitos,
+    escolha_acao
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', redirect_to_login, name='home'),
-    path('login/', redirect_to_login),
+    path('', dashboard, name='dashboard'),
+    path('login/', LoginView.as_view(template_name='funcionarios/login.html'), name='login'),
+    path('escolha-acao/', escolha_acao, name='escolha_acao'),
+    path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
+    path('servidor-dashboard/', servidor_dashboard, name='servidor_dashboard'),
+    path('ferias/registrar/', registrar_ferias_funcionario, name='registrar_ferias_funcionario'),
+    path('ferias/cancelar/<int:ferias_id>/', cancelar_ferias, name='cancelar_ferias'),
+    path('plantao/registrar/', registrar_plantao_funcionario, name='registrar_plantao_funcionario'),
+    path('calendario/', calendario, name='calendario'),
+    path('feriados/', feriados, name='feriados'),
+    path('api/verificar-conflitos/', verificar_conflitos, name='verificar_conflitos'),
+    path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
     path('funcionarios/', include('funcionarios.urls')),
 ]

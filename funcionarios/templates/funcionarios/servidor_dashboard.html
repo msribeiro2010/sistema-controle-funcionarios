@@ -100,7 +100,7 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Meus Plantões</h5>
-                    <a href="{% url 'registrar_plantao_funcionario' %}" class="btn btn-primary btn-sm">
+                    <a href="{% url 'funcionarios:registrar_plantao' %}" class="btn btn-primary btn-sm">
                         <i class="fas fa-plus"></i> Registrar Plantão
                     </a>
                 </div>
@@ -124,10 +124,10 @@
                                     <td>{{ plantao.folgas_restantes }}</td>
                                     <td>{{ plantao.observacoes|default:"-" }}</td>
                                     <td class="text-end px-3">
-                                        <a href="{% url 'editar_plantao' plantao.id %}" class="btn btn-sm btn-warning">
+                                        <a href="{% url 'funcionarios:editar_plantao' plantao.id %}" class="btn btn-sm btn-warning">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form method="post" action="{% url 'excluir_plantao' plantao.id %}" class="d-inline">
+                                        <form method="post" action="{% url 'funcionarios:excluir_plantao' plantao.id %}" class="d-inline">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este plantão?')">
                                                 <i class="fas fa-trash"></i>
@@ -152,7 +152,7 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Minhas Férias</h5>
-                    <a href="{% url 'registrar_ferias' %}" class="btn btn-primary btn-sm">
+                    <a href="{% url 'funcionarios:registrar_ferias' %}" class="btn btn-primary btn-sm">
                         <i class="fas fa-plus"></i> Solicitar Férias
                     </a>
                 </div>
@@ -184,10 +184,10 @@
                                     </td>
                                     <td class="text-end px-3">
                                         {% if f.status == 'AGENDADO' %}
-                                            <a href="{% url 'editar_ferias' f.id %}" class="btn btn-sm btn-warning">
+                                            <a href="{% url 'funcionarios:editar_ferias' f.id %}" class="btn btn-sm btn-warning">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <form method="post" action="{% url 'excluir_ferias' f.id %}" class="d-inline">
+                                            <form method="post" action="{% url 'funcionarios:excluir_ferias' f.id %}" class="d-inline">
                                                 {% csrf_token %}
                                                 <button type="submit" class="btn btn-sm btn-danger" 
                                                         onclick="return confirm('Tem certeza que deseja excluir estas férias?')">
@@ -217,7 +217,7 @@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Controle de dias no Presencial</h5>
-                    <a href="{% url 'registrar_presenca' %}" class="btn btn-primary btn-sm">
+                    <a href="{% url 'funcionarios:registrar_presenca' %}" class="btn btn-primary btn-sm">
                         <i class="fas fa-plus"></i> Registrar
                     </a>
                 </div>
@@ -239,10 +239,10 @@
                                     <td>{{ presenca.get_tipo_trabalho_display }}</td>
                                     <td>{{ presenca.observacoes|default:"-" }}</td>
                                     <td class="text-end px-3">
-                                        <a href="{% url 'editar_presenca' presenca.id %}" class="btn btn-sm btn-warning">
+                                        <a href="{% url 'funcionarios:editar_presenca' presenca.id %}" class="btn btn-sm btn-warning">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form method="post" action="{% url 'excluir_presenca' presenca.id %}" class="d-inline">
+                                        <form method="post" action="{% url 'funcionarios:excluir_presenca' presenca.id %}" class="d-inline">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este registro?')">
                                                 <i class="fas fa-trash"></i>
@@ -267,7 +267,7 @@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Controle de dias de Folgas</h5>
-                    <a href="{% url 'gerenciar_folgas' %}" class="btn btn-primary btn-sm">
+                    <a href="{% url 'funcionarios:gerenciar_folgas' %}" class="btn btn-primary btn-sm">
                         <i class="fas fa-plus"></i> Registrar
                     </a>
                 </div>
@@ -289,10 +289,10 @@
                                     <td>{{ folga.get_tipo_folga_display }}</td>
                                     <td>{{ folga.observacoes|default:"-" }}</td>
                                     <td class="text-end px-3">
-                                        <a href="{% url 'editar_folga' folga.id %}" class="btn btn-sm btn-warning">
+                                        <a href="{% url 'funcionarios:editar_folga' folga.id %}" class="btn btn-sm btn-warning">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form method="post" action="{% url 'excluir_folga' folga.id %}" class="d-inline">
+                                        <form method="post" action="{% url 'funcionarios:excluir_folga' folga.id %}" class="d-inline">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este registro?')">
                                                 <i class="fas fa-trash"></i>
