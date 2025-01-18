@@ -16,7 +16,7 @@ mkdir -p staticfiles
 echo "Current directory: $(pwd)"
 echo "Directory contents: $(ls -la)"
 echo "Python path: $(which python)"
-echo "Daphne path: $(which daphne)"
+echo "Uvicorn path: $(which uvicorn)"
 
 # Configurar PYTHONPATH
 export PYTHONPATH=/opt/render/project/src:$PYTHONPATH
