@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth.views import LoginView
 from . import views
 from .views import (
     gerenciar_presenca, editar_ferias, editar_plantao, 
@@ -9,6 +10,7 @@ from .views import (
 app_name = 'funcionarios'
 
 urlpatterns = [
+    path('login/', LoginView.as_view(template_name='funcionarios/login.html'), name='login'),
     path('', views.dashboard, name='dashboard'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('servidor-dashboard/', servidor_dashboard, name='servidor_dashboard'),
