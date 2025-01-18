@@ -17,7 +17,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', 'sistema-controle-funcionarios.onrender.com']
 
 # Application definition
 INSTALLED_APPS = [
@@ -113,7 +113,7 @@ LOGOUT_REDIRECT_URL = '/login/'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# Configurações de segurança - DESATIVE temporariamente para debug
+# Configurações de segurança
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
@@ -169,12 +169,12 @@ ASGI_APPLICATION = 'core.asgi.application'
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Configurações de autenticação
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/funcionarios/login/'
+LOGIN_REDIRECT_URL = '/funcionarios/'
+LOGOUT_REDIRECT_URL = '/funcionarios/login/'
 
 # Configurações de segurança para produção
-ALLOWED_HOSTS = ['*']  # Ou especifique seu domínio render.com
+ALLOWED_HOSTS = ['*', 'sistema-controle-funcionarios.onrender.com']
 CSRF_TRUSTED_ORIGINS = ['https://*.render.com']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 

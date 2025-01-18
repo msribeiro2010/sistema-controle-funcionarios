@@ -10,11 +10,21 @@
                     <h3 class="text-center">Login</h3>
                 </div>
                 <div class="card-body">
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            Usuário ou senha incorretos. Por favor, tente novamente.
+                        </div>
+                    {% endif %}
+                    {% if request.session.login_error %}
+                        <div class="alert alert-danger">
+                            {{ request.session.login_error }}
+                        </div>
+                    {% endif %}
                     <form method="post">
                         {% csrf_token %}
                         {{ form|crispy }}
                         <input type="hidden" name="next" value="{{ request.GET.next }}">
-                        <div class="d-grid gap-2">
+                        <div class="d-grid gap-2 mt-3">
                             <button type="submit" class="btn btn-primary">Entrar</button>
                         </div>
                     </form>

@@ -591,15 +591,20 @@ def excluir_ferias(request, ferias_id):
 
 class CustomLoginView(LoginView):
     template_name = 'funcionarios/login.html'
-    success_url = reverse_lazy('funcionarios:painel')
     redirect_authenticated_user = True
 
     def get_success_url(self):
         next_url = self.request.GET.get('next')
         if next_url:
             return next_url
-        return self.success_url
+        return reverse_lazy('funcionarios:dashboard')
 
     def form_invalid(self, form):
-        print(f"Login error: {form.errors}")  # Debug
+        for error in form.errors.values():
+            self.request.session['login_error'] = error[0]
         return super().form_invalid(form)
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('funcionarios:dashboard')
+        return super().get(request, *args, **kwargs)

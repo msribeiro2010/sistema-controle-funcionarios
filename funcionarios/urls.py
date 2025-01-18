@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
-from .views import gerenciar_presenca, editar_ferias, editar_plantao, excluir_plantao, editar_presenca, excluir_presenca, gerenciar_folgas
+from .views import CustomLoginView, gerenciar_presenca, editar_ferias, editar_plantao, excluir_plantao, editar_presenca, excluir_presenca, gerenciar_folgas
+
+app_name = 'funcionarios'
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
@@ -9,7 +11,6 @@ urlpatterns = [
     path('registrar-ferias/', views.registrar_ferias_funcionario, name='registrar_ferias'),
     path('registrar-plantao/', views.registrar_plantao_funcionario, name='registrar_plantao'),
     path('feriados/', views.feriados, name='feriados'),
-    path('logout/', views.logout_view, name='logout_view'),
     path('gerenciar-presenca/', gerenciar_presenca, name='gerenciar_presenca'),
     path('ferias/editar/<int:ferias_id>/', editar_ferias, name='editar_ferias'),
     path('plantao/editar/<int:plantao_id>/', editar_plantao, name='editar_plantao'),
