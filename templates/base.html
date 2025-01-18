@@ -11,7 +11,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">Controle Presencial/Remoto/Férias/Folgas</a>
+            <a class="navbar-brand" href="{% url 'funcionarios:dashboard' %}">Controle Presencial/Remoto/Férias/Folgas</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -19,14 +19,14 @@
                 <ul class="navbar-nav me-auto">
                     {% if user.is_superuser %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'admin_dashboard' %}">Painel Admin</a>
+                        <a class="nav-link" href="{% url 'funcionarios:admin_dashboard' %}">Painel Admin</a>
                     </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'calendario' %}">Calendário</a>
+                        <a class="nav-link" href="{% url 'funcionarios:calendario' %}">Calendário</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'feriados' %}">Feriados</a>
+                        <a class="nav-link" href="{% url 'funcionarios:feriados' %}">Feriados</a>
                     </li>
                 </ul>
                 {% if user.is_authenticated %}
