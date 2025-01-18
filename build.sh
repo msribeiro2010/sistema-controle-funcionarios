@@ -25,8 +25,8 @@ export PYTHONPATH=/opt/render/project/src:$PYTHONPATH
 python -c "import core.wsgi; print('WSGI module found')"
 python -c "import core.asgi; print('ASGI module found')"
 
-# Testar uvicorn
-uvicorn --version
+# Dar permissão ao script de inicialização
+chmod +x start.sh
 
 # Coletar arquivos estáticos
 python manage.py collectstatic --noinput

@@ -1,0 +1,1 @@
+exec /opt/render/project/src/.venv/bin/python -m uvicorn core.asgi:application --host 0.0.0.0 --port $PORT 
