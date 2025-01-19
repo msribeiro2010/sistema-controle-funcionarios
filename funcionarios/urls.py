@@ -4,7 +4,7 @@ from . import views
 from .views import (
     gerenciar_presenca, editar_ferias, editar_plantao, 
     excluir_plantao, editar_presenca, excluir_presenca, 
-    gerenciar_folgas, servidor_dashboard, CustomLoginView
+    gerenciar_folgas, servidor_dashboard, CustomLoginView, registro
 )
 
 app_name = 'funcionarios'
@@ -32,4 +32,5 @@ urlpatterns = [
     path('ferias/registrar/', views.registrar_ferias_funcionario, name='registrar_ferias'),
     path('ferias/excluir/<int:ferias_id>/', views.excluir_ferias, name='excluir_ferias'),
     path('escolha-acao/', views.escolha_acao, name='escolha_acao'),
+    path('registro/', registro, name='registro'),
 ]

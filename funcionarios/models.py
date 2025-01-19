@@ -5,10 +5,17 @@ from django.utils import timezone
 from datetime import date, timedelta
 
 class Funcionario(models.Model):
+    CARGO_CHOICES = [
+        ('SERVIDOR', 'Servidor'),
+        ('COORDENADOR', 'Coordenador'),
+        ('DIRETOR', 'Diretor'),
+        ('ADMINISTRADOR', 'Administrador'),
+    ]
+
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='Usuário')
     nome = models.CharField('Nome', max_length=100)
     matricula = models.CharField('Matrícula', max_length=20, unique=True)
-    cargo = models.CharField('Cargo', max_length=50, blank=True, null=True)
+    cargo = models.CharField(max_length=20, choices=CARGO_CHOICES)
     dias_ferias_disponiveis = models.IntegerField('Dias de Férias Disponíveis', default=30)
 
     class Meta:
@@ -17,7 +24,7 @@ class Funcionario(models.Model):
         ordering = ['nome']
 
     def __str__(self):
-        return f"{self.nome} ({self.matricula})"
+        return self.nome
 
 class Feriado(models.Model):
     TIPO_CHOICES = (

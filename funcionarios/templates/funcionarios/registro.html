@@ -7,32 +7,30 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="text-center">Login</h3>
+                    <h3 class="text-center">Registro de Usuário</h3>
                 </div>
                 <div class="card-body">
-                    {% if form.errors %}
-                        <div class="alert alert-danger">
-                            Usuário ou senha incorretos. Por favor, tente novamente.
-                        </div>
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
                     {% endif %}
-                    {% if request.session.login_error %}
-                        <div class="alert alert-danger">
-                            {{ request.session.login_error }}
-                        </div>
-                    {% endif %}
+                    
                     <form method="post">
                         {% csrf_token %}
                         {{ form|crispy }}
                         <div class="d-grid gap-2 mt-3">
-                            <button type="submit" class="btn btn-primary">Entrar</button>
+                            <button type="submit" class="btn btn-primary">Registrar</button>
                         </div>
                     </form>
                     <div class="text-center mt-3">
-                        <p>Não tem uma conta? <a href="{% url 'funcionarios:registro' %}">Registre-se</a></p>
+                        <p>Já tem uma conta? <a href="{% url 'funcionarios:login' %}">Faça login</a></p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock %} 

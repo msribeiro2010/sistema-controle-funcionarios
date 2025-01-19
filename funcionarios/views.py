@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db.models import Q, Count
 from datetime import datetime, timedelta, date
 from .models import Funcionario, Ferias, Plantao, Feriado, Presenca, Folga
-from django.contrib.auth import logout
+from django.contrib.auth import logout, login
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.exceptions import PermissionDenied
 import calendar
@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
+from .forms import RegistroForm
 
 def logout_view(request):
     logout(request)
@@ -598,3 +599,15 @@ class CustomLoginView(LoginView):
         if request.user.is_authenticated:
             return redirect('funcionarios:dashboard')
         return super().get(request, *args, **kwargs)
+
+def registro(request):
+    if request.method == 'POST':
+        form = RegistroForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Registro realizado com sucesso!')
+            return redirect('funcionarios:escolha_acao')
+    else:
+        form = RegistroForm()
+    return render(request, 'funcionarios/registro.html', {'form': form})
