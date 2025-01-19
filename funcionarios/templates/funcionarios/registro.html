@@ -4,33 +4,89 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="text-center">Registro de Usuário</h3>
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0 text-center">Criar Nova Conta</h3>
                 </div>
                 <div class="card-body">
                     {% if messages %}
                         {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }}">
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
                                 {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         {% endfor %}
                     {% endif %}
                     
-                    <form method="post">
+                    <form method="post" class="needs-validation" novalidate>
                         {% csrf_token %}
-                        {{ form|crispy }}
-                        <div class="d-grid gap-2 mt-3">
-                            <button type="submit" class="btn btn-primary">Registrar</button>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.username|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.email|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.nome|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.matricula|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.cargo|as_crispy_field }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.password1|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.password2|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Criar Conta
+                            </button>
                         </div>
                     </form>
-                    <div class="text-center mt-3">
-                        <p>Já tem uma conta? <a href="{% url 'funcionarios:login' %}">Faça login</a></p>
+
+                    <div class="text-center mt-4">
+                        <p class="mb-0">Já tem uma conta? <a href="{% url 'funcionarios:login' %}" class="text-primary">Faça login</a></p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+// Validação do formulário
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+})()
+</script>
+{% endblock %}
+
 {% endblock %} 
