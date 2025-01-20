@@ -93,6 +93,82 @@
         </div>
     </div>
 
+    <!-- Seção de Plantões -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Plantões</h5>
+                <div>
+                    <a href="{% url 'funcionarios:registrar_plantao' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Novo Plantão
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Resumo de Folgas -->
+            <div class="alert alert-info mb-4">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="mb-1">Folgas Geradas</h6>
+                        <p class="mb-0">{{ total_folgas_geradas }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="mb-1">Folgas Utilizadas</h6>
+                        <p class="mb-0">{{ folgas_utilizadas }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="mb-1">Saldo de Folgas</h6>
+                        <p class="mb-0"><strong>{{ saldo_folgas }}</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            {% if plantoes %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Tipo</th>
+                                <th>Folgas Geradas</th>
+                                <th>Folgas Utilizadas</th>
+                                <th>Folgas Restantes</th>
+                                <th>Observações</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plantao in plantoes %}
+                                <tr>
+                                    <td>{{ plantao.data|date:"d/m/Y" }}</td>
+                                    <td>{{ plantao.get_tipo_display }}</td>
+                                    <td>{{ plantao.folgas_geradas }}</td>
+                                    <td>{{ plantao.folgas_utilizadas }}</td>
+                                    <td>{{ plantao.folgas_restantes }}</td>
+                                    <td>{{ plantao.observacoes|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'funcionarios:editar_plantao' plantao.id %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{% url 'funcionarios:excluir_plantao' plantao.id %}" method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este plantão?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">Nenhum plantão registrado.</p>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Seção de Plantões e Férias em Grid -->
     <div class="row mb-4">
         <!-- Meus Plantões -->

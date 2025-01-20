@@ -278,10 +278,14 @@ def servidor_dashboard(request):
         funcionario=funcionario
     ).order_by('-data_inicio')
     
-    # Buscar plantões do funcionário
+    # Buscar plantões do funcionário e calcular saldo de folgas
     plantoes = Plantao.objects.filter(
         funcionario=funcionario
     ).order_by('-data')
+    
+    total_folgas_geradas = sum(p.folgas_geradas for p in plantoes)
+    folgas_utilizadas = folgas.count()
+    saldo_folgas = total_folgas_geradas - folgas_utilizadas
     
     # Buscar feriados do mês atual
     feriados = Feriado.objects.filter(
@@ -314,6 +318,9 @@ def servidor_dashboard(request):
         'feriados': feriados,
         'ferias_com_conflito': ferias_com_conflito,
         'dias_ferias_disponiveis': funcionario.dias_ferias_disponiveis,
+        'total_folgas_geradas': total_folgas_geradas,
+        'folgas_utilizadas': folgas_utilizadas,
+        'saldo_folgas': saldo_folgas,
     }
     return render(request, 'funcionarios/servidor_dashboard.html', context)
 
@@ -470,20 +477,71 @@ def excluir_presenca(request, presenca_id):
 @login_required
 def gerenciar_folgas(request):
     funcionario = get_object_or_404(Funcionario, usuario=request.user)
+    
+    # Calcular saldo de folgas disponíveis
+    plantoes = Plantao.objects.filter(funcionario=funcionario)
+    total_folgas_geradas = sum(p.folgas_geradas for p in plantoes)
+    folgas_utilizadas = Folga.objects.filter(funcionario=funcionario).count()
+    saldo_folgas = total_folgas_geradas - folgas_utilizadas
+
     if request.method == 'POST':
-        tipo_folga = request.POST.get('tipo_folga')
-        dias_selecionados = request.POST.getlist('dias')
-        observacoes = request.POST.get('observacoes', '')
+        try:
+            # Verificar saldo antes de registrar
+            if saldo_folgas <= 0:
+                messages.error(request, 'Você não possui saldo de folgas disponível.')
+                return redirect('funcionarios:gerenciar_folgas')
 
-        for dia in dias_selecionados:
-            data = datetime.strptime(dia, '%d/%m/%Y').date()
-            Folga.objects.create(funcionario=funcionario, data=data, tipo_folga=tipo_folga, observacoes=observacoes)
+            data = datetime.strptime(request.POST['data'], '%Y-%m-%d').date()
+            tipo_folga = request.POST.get('tipo_folga')
+            observacoes = request.POST.get('observacoes', '')
 
-        messages.success(request, 'Folga registrada com sucesso!')
-        return redirect('gerenciar_folgas')
+            # Verificar se já existe folga nesta data
+            if Folga.objects.filter(funcionario=funcionario, data=data).exists():
+                messages.error(request, 'Já existe uma folga registrada nesta data.')
+                return redirect('funcionarios:gerenciar_folgas')
+
+            # Criar a folga
+            Folga.objects.create(
+                funcionario=funcionario,
+                data=data,
+                tipo_folga=tipo_folga,
+                observacoes=observacoes
+            )
+
+            # Atualizar o contador de folgas utilizadas no plantão mais antigo com saldo
+            plantoes_com_saldo = Plantao.objects.filter(
+                funcionario=funcionario,
+                folgas_restantes__gt=0
+            ).order_by('data')
+            
+            if plantoes_com_saldo.exists():
+                plantao = plantoes_com_saldo.first()
+                plantao.folgas_utilizadas += 1
+                plantao.folgas_restantes -= 1
+                plantao.save()
+
+            messages.success(request, 'Folga registrada com sucesso!')
+            return redirect('funcionarios:servidor_dashboard')
+        except ValueError:
+            messages.error(request, 'Data inválida.')
+            return redirect('funcionarios:gerenciar_folgas')
+        except Exception as e:
+            messages.error(request, f'Erro ao registrar folga: {str(e)}')
+            return redirect('funcionarios:gerenciar_folgas')
 
     folgas = Folga.objects.filter(funcionario=funcionario).order_by('-data')
-    return render(request, 'funcionarios/gerenciar_folgas.html', {'folgas': folgas})
+    plantoes_com_saldo = Plantao.objects.filter(
+        funcionario=funcionario,
+        folgas_restantes__gt=0
+    ).order_by('data')
+
+    context = {
+        'folgas': folgas,
+        'funcionario': funcionario,
+        'saldo_folgas': saldo_folgas,
+        'plantoes_com_saldo': plantoes_com_saldo,
+    }
+    return render(request, 'funcionarios/gerenciar_folgas.html', context)
 
 def painel_funcionario(request):
     # ... código existente ...
@@ -505,7 +563,7 @@ def registrar_presenca(request):
         funcionario = Funcionario.objects.get(usuario=request.user)
     except Funcionario.DoesNotExist:
         messages.error(request, 'Funcionário não encontrado.')
-        return redirect('dashboard')
+        return redirect('funcionarios:dashboard')
 
     if request.method == 'POST':
         try:
@@ -522,12 +580,12 @@ def registrar_presenca(request):
             presenca.full_clean()
             presenca.save()
             messages.success(request, 'Presença registrada com sucesso!')
-            return redirect('historico_presencas')
+            return redirect('funcionarios:servidor_dashboard')
         except ValidationError as e:
             for field, errors in e.message_dict.items():
                 for error in errors:
                     messages.error(request, f'{error}')
-            return redirect('registrar_presenca')
+            return redirect('funcionarios:registrar_presenca')
 
     return render(request, 'funcionarios/registrar_presenca.html', {'funcionario': funcionario})
 

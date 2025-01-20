@@ -23,7 +23,7 @@
                     <h5 class="mb-0">Registrar Presença</h5>
                 </div>
                 <div class="card-body">
-                    <form method="post">
+                    <form method="post" action="{% url 'funcionarios:registrar_presenca' %}">
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="data" class="form-label">Data</label>
@@ -42,7 +42,7 @@
                         </div>
                         <div class="d-flex justify-content-between">
                             <button type="submit" class="btn btn-primary">Registrar Presença</button>
-                            <a href="{% url 'servidor_dashboard' %}" class="btn btn-secondary">Voltar</a>
+                            <a href="{% url 'funcionarios:servidor_dashboard' %}" class="btn btn-secondary">Voltar</a>
                         </div>
                     </form>
                 </div>
