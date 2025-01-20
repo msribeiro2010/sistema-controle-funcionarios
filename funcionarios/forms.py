@@ -58,12 +58,25 @@ class RegistroForm(UserCreationForm):
             </small>
         '''
         self.fields['password2'].help_text = '<small class="text-muted">Digite a mesma senha novamente, para verificação.</small>'
+        self.fields['email'].help_text = 'Use seu email institucional (@trt15.jus.br)'
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('Este e-mail já está em uso.')
+        
+        # Validar domínio do email
+        domain = email.split('@')[-1]
+        if domain.lower() != 'trt15.jus.br':
+            raise forms.ValidationError('Por favor, use seu email institucional (@trt15.jus.br)')
+        
         return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError('Este nome de usuário já está em uso.')
+        return username
 
     def clean_matricula(self):
         matricula = self.cleaned_data.get('matricula')
