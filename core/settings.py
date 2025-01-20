@@ -129,36 +129,47 @@ AUTHENTICATION_BACKENDS = [
 
 # Session configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_COOKIE_AGE = 1209600  # 2 semanas em segundos
+SESSION_SAVE_EVERY_REQUEST = True
+
+if PRODUCTION:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_DOMAIN = '.onrender.com'  # Ajuste para seu domínio
+    CSRF_TRUSTED_ORIGINS = ['https://*.render.com']
+else:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # Environment-specific settings
 if PRODUCTION:
     # Production settings
     ALLOWED_HOSTS = ['sistema-controle-funcionarios.onrender.com']
-    CSRF_TRUSTED_ORIGINS = ['https://*.render.com']
     
     # Security settings
     SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = 'DENY'
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": config('REDIS_URL', default='redis://localhost:6379/1'),
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
 else:
     # Development settings
     ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1']
-    CSRF_TRUSTED_ORIGINS = []
     
     # Security settings for development
     SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-    SECURE_BROWSER_XSS_FILTER = False
     
     # Logging configuration for development
     LOGGING = {

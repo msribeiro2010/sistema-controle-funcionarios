@@ -584,16 +584,17 @@ class CustomLoginView(LoginView):
     template_name = 'funcionarios/login.html'
     redirect_authenticated_user = True
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.session.get_expire_at_browser_close():
+            self.request.session.set_expiry(1209600)  # 2 semanas
+        return response
+
     def get_success_url(self):
         next_url = self.request.GET.get('next')
         if next_url:
             return next_url
         return reverse_lazy('funcionarios:dashboard')
-
-    def form_invalid(self, form):
-        for error in form.errors.values():
-            self.request.session['login_error'] = error[0]
-        return super().form_invalid(form)
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:

@@ -11,12 +11,22 @@ services:
         fromDatabase:
           name: sistema-controle-funcionarios-db
           property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: sistema-controle-funcionarios-redis
+          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: PRODUCTION
         value: true
       - key: DEBUG
         value: false
+
+  - type: redis
+    name: sistema-controle-funcionarios-redis
+    ipAllowList: []
+    plan: free
 
 databases:
   - name: sistema-controle-funcionarios-db
